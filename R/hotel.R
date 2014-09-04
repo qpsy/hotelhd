@@ -22,7 +22,8 @@
 #' }
 #'
 #' @importFrom nleqslv nleqslv
-#' @import doParallel, foreach
+#' @import doParallel
+#' @import foreach
 #'
 #' @export
 hotelhd <- function(d1, d2, type=c("T2", "nonexact", "BS"), na.rm=TRUE) {
