@@ -97,7 +97,7 @@ hotelhd <- function(d1, d2, type=c("T2", "nonexact", "BS"), na.rm=TRUE) {
     r2 <- nleqslv(10, r2eq)$x
 
     ## test statistics F
-    F_Demp <- sum(Fpre[2, ]) / sum(Fpre[3:n, ])
+    F_Demp <- (n-2) * sum(Fpre[2, ]) / sum(Fpre[3:n, ])
     pF1_Demp <- pf(F_Demp, r1, r1*(n-2), lower.tail=FALSE)
     pF2_Demp <- pf(F_Demp, r2, r2*(n-2), lower.tail=FALSE)
 
@@ -107,7 +107,7 @@ hotelhd <- function(d1, d2, type=c("T2", "nonexact", "BS"), na.rm=TRUE) {
 
   } else if (type=="BS") {
     trS <- sum(diag(S))
-    trS2 <- sum(diag(S*S))
+    trS2 <- sum(diag(S %*% S))
     Z_BS <- (n1*n2/n * sum(meanDiff * meanDiff) - trS) /
         sqrt(2*(n-1)*(n-2)/(n*(n-3)) * (trS2 - 1/(n-2)*trS*trS))
     pZ_BS <- pnorm(Z_BS, lower.tail=FALSE)
