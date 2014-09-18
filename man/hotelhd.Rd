@@ -3,22 +3,33 @@
 \alias{hotelhd}
 \title{Hotelling's Test with High Dimensional Data}
 \usage{
-hotelhd(d1, d2, type = c("T2", "nonexact", "BS"), na.rm = TRUE)
+hotelhd(X1, X2, method = c("H", "D", "BS", "CQ"), na.rm = TRUE)
 }
 \arguments{
-\item{d1}{a dataset. \code{as.matrix} will be applied.}
+\item{X1}{a n1 by p data matrix. Only a matrix can be used.}
 
-\item{d2}{a dataset. \code{as.matrix} will be applied.}
+\item{X2}{a n2 by p data matrix.}
+
+\item{method}{method to be used. See 'Details'.}
+
+\item{na.rm}{logical value of TRUE or FALSE.
+option for calculating means of p varuables}
 }
 \value{
 Test results
 }
 \description{
-TEST
-}
-\details{
 Users should take care to ensure that the two dataset have
 the same variables and the same order of the variables
+}
+\details{
+Method "H" is ...
+
+Method "D" is
+
+Method "BS" is
+
+Method "CQ" is
 }
 \examples{
 \dontrun{

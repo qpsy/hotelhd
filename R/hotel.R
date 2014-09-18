@@ -1,17 +1,27 @@
 #' Hotelling's Test with High Dimensional Data
 #'
-#' TEST
-#'
 #' Users should take care to ensure that the two dataset have
 #' the same variables and the same order of the variables
 #'
 #'
-#' @param d1 a dataset. \code{as.matrix} will be applied.
-#' @param d2 a dataset. \code{as.matrix} will be applied.
+#' @param X1 a n1 by p data matrix. Only a matrix can be used.
+#' @param X2 a n2 by p data matrix.
+#' @param method method to be used. See 'Details'.
+#' @param na.rm logical value of TRUE or FALSE.
+#' option for calculating means of p varuables
 #'
 #' @author Dongjun You
 #'
 #' @return Test results
+#'
+#' @details
+#' Method "H" is ...
+#'
+#' Method "D" is
+#'
+#' Method "BS" is
+#'
+#' Method "CQ" is
 #'
 #' @references
 #' will be added
@@ -22,42 +32,40 @@
 #' }
 #'
 #' @importFrom nleqslv nleqslv
-#' @import doParallel
 #' @import foreach
 #'
 #' @export
-hotelhd <- function(d1, d2, type=c("T2", "nonexact", "BS"), na.rm=TRUE) {
-  d1 <- as.matrix(d1)
-  d2 <- as.matrix(d2)
+hotelhd <- function(X1, X2, method=c("H", "D", "BS", "CQ"), na.rm=TRUE) {
+  stopifnot(is.matrix(X1), is.matrix(X1))
 
-  n1 <- NROW(d1)
-  n2 <- NROW(d2)
+  n1 <- NROW(X1)
+  n2 <- NROW(X2)
   n <- n1 + n2
 
-  p1 <- NCOL(d1)
-  p2 <- NCOL(d2)
+  p1 <- NCOL(X1)
+  p2 <- NCOL(X2)
   if (p1 != p2)
     stop("Both samples must have the same number of variables (columns)")
   p <- p1
 
-  d1bar <- colMeans(d1, na.rm=na.rm)
-  d2bar <- colMeans(d2, na.rm=na.rm)
-  meanDiff <- d1bar - d2bar
-  S <- ((n1 - 1) * cov(d1) + (n2 - 1) * cov(d2))/(n - 2)
+  X1bar <- colMeans(X1, na.rm=na.rm)
+  X2bar <- colMeans(X2, na.rm=na.rm)
+  meanDiff <- X1bar - X2bar
+  S <- ((n1 - 1) * cov(X1) + (n2 - 1) * cov(X2))/(n - 2)
 
-  type <- match.arg(type)
+  method <- match.arg(method)
 
-  if (type=="T2") { # Hotelling's T2
+  if (method=="H") { # Hotelling's T2
     Sinv <- chol2inv(chol(S))
-    T2 <- as.vector(n1*n2/n * t(meanDiff) %*% Sinv %*% (meanDiff))
-    F_T2 <- (n - p - 1)/(p * (n - 2)) * T2
-    pF_T2 <- pf(F_T2, p, n-p-1, lower.tail=FALSE)
+    H <- as.vector(n1*n2/n * t(meanDiff) %*% Sinv %*% (meanDiff))
+    F_H <- (n - p - 1)/(p * (n - 2)) * H
+    pF_H <- pf(F_H, p, n-p-1, lower.tail=FALSE)
 
-    list(statistic=F_T2, pval=pF_T2,
-         df=c(p, n - p - 1), n1 = n1, n2 = n2, nvar=p, type=type)
+    list(statistic=F_H, pval=pF_H, df=c(df1=p, df2=n-p-1),
+         nobs=c(n1=n1, n2=n2), nvar=p, method=method)
 
-  } else if (type=="nonexact") {
-    X <- rbind(d1, d2)
+  } else if (method=="D") {
+    X <- rbind(X1, X2)
     Htmp <- cbind(1/sqrt(n) * rep(1, n), # 1st row
                     c(rep(sqrt(n2/(n*n1)), n1),
                       -rep(sqrt(n1/(n*n2)), n2))) # 2nd row
@@ -77,18 +85,20 @@ hotelhd <- function(d1, d2, type=c("T2", "nonexact", "BS"), na.rm=TRUE) {
     r1 <- nleqslv(10, r1eq)$x
 
     ## calculate r2
+    # registerDoParallel()
     idx <- combn(3:n, 2)
-    # if(isTRUE(try(require(doParallel)))) {
-    registerDoParallel()
-    theta <- foreach (i=1:NCOL(idx)) %dopar% {# angle of every two vectors
-      thTmp <- Y[idx[, i], ]
-      y1 <- thTmp[1, ]
-      y2 <- thTmp[2, ]
-      acos(sum(y1 * y2) / (sqrt(sum(y1 * y1) * sum(y2 * y2))))
-    }
+    w <- foreach (i=idx, .combine=c,
+                  .final=function(res) -sum(res)) %do% {
+           thTmp <- Y[i, ]
+           y1 <- thTmp[1, ]
+           y2 <- thTmp[2, ]
+           sinTheta <- sin(# angle of every two vectors
+               acos(sum(y1 * y2) / (sqrt(sum(y1 * y1) * sum(y2 * y2)))))
+           log(sinTheta * sinTheta)
+         }
 
-    sinTheta <- sin(unlist(theta))
-    w <- -sum(log(sinTheta * sinTheta))
+  #sinTheta <- sin(unlist(theta))
+    #w <- -sum(log(sinTheta * sinTheta))
 
     r2eq <- function(r2) {
       (1/r2 + (1 + 1/(n-2))/(3*r2*r2)) * (n - 3) +
@@ -97,22 +107,70 @@ hotelhd <- function(d1, d2, type=c("T2", "nonexact", "BS"), na.rm=TRUE) {
     r2 <- nleqslv(10, r2eq)$x
 
     ## test statistics F
-    F_Demp <- (n-2) * sum(Fpre[2, ]) / sum(Fpre[3:n, ])
-    pF1_Demp <- pf(F_Demp, r1, r1*(n-2), lower.tail=FALSE)
-    pF2_Demp <- pf(F_Demp, r2, r2*(n-2), lower.tail=FALSE)
+    F_D <- (n-2) * sum(Fpre[2, ]) / sum(Fpre[3:n, ])
+    pF1_D <- pf(F_D, r1, r1*(n-2), lower.tail=FALSE)
+    pF2_D <- pf(F_D, r2, r2*(n-2), lower.tail=FALSE)
 
-    list(statistic=F_Demp, r=c(r1=r1, r2=r2),
-         pval=c(pval1=pF1_Demp, pval2=pF2_Demp),
-         n1=n1, n2=n2, nvar=p, type=type)
+    list(statistic=F_D, r=c(r1=r1, r2=r2),
+         pval=c(pval1=pF1_D, pval2=pF2_D),
+         nobs=c(n1=n1, n2=n2), nvar=p, method=method)
 
-  } else if (type=="BS") {
+  } else if (method=="BS") {
     trS <- sum(diag(S))
     trS2 <- sum(diag(S %*% S))
-    Z_BS <- (n1*n2/n * sum(meanDiff * meanDiff) - trS) /
+    Z_Mn <- (n1*n2/n * sum(meanDiff * meanDiff) - trS) /
         sqrt(2*(n-1)*(n-2)/(n*(n-3)) * (trS2 - 1/(n-2)*trS*trS))
-    pZ_BS <- pnorm(Z_BS, lower.tail=FALSE)
+    pZ_Mn <- pnorm(Z_Mn, lower.tail=FALSE)
 
-    list(statistics=Z_BS, pval=pZ_BS,
-         n1 = n1, n2 = n2, nvar=p, type=type)
+    list(statistics=Z_Mn, pval=pZ_Mn,
+         nobs=c(n1=n1, n2=n2), nvar=p, method=method)
+
+  } else if (method=="CQ") {
+    prod11 <- tcrossprod(X1)
+    prod22 <- tcrossprod(X2)
+
+    Tn <- (sum(prod11) - sum(diag(prod11))) / (n1*(n1-1)) +
+        (sum(prod22) - sum(diag(prod22))) / (n2*(n2-1)) -
+            2 * sum(tcrossprod(X1, X2)) / (n1*n2)
+
+    # registerDoParallel()
+    idx1 <- combn(1:n1, 2)
+    trSigma1Sq <- foreach (i = idx1, .combine="+",
+                    .final=function(res) 1/(n1*(n1-1)) * 2*sum(diag(res))) %do% {
+      y <- X1[i, ]
+      Xj <- y[1, , drop=FALSE]
+      Xk <- y[2, , drop=FALSE]
+      Xbar_jk <- colMeans(X1[-i, ])
+      t(Xj - Xbar_jk) %*% Xj %*% t(Xk - Xbar_jk) %*% Xk
+    }
+
+    idx2 <- combn(1:n2, 2)
+    trSigma2Sq <- foreach (i = idx2, .combine="+",
+                    .final=function(res) 1/(n1*(n1-1)) * 2*sum(diag(res))) %do% {
+      y <- X2[i, ]
+      Xj <- y[1, , drop=FALSE]
+      Xk <- y[2, , drop=FALSE]
+      Xbar_jk <- colMeans(X2[-i, ])
+      t(Xj - Xbar_jk) %*% Xj %*% t(Xk - Xbar_jk) %*% Xk
+    }
+
+  idx3 <- expand.grid(1:n1, 1:n2)
+  trSigma12 <- foreach (j=idx3[, 1], k=idx3[, 2], .combine="+",
+                 .final=function(res) 1/(n1*n2) * sum(diag(res))) %do% {
+      X1j <- X1[j, , drop=FALSE]
+      X1bar_j <- colMeans(X1[-j, ])
+      X2k <- X2[k, , drop=FALSE]
+      X2bar_k <- colMeans(X2[-k, ])
+      t(X1j - X1bar_j) %*% X1j %*% t(X2k - X2bar_k) %*% X2k
+    }
+
+    Var_Tn <- 2/(n1*(n1-1)) * trSigma1Sq + 2/(n2*(n2-1)) * trSigma2Sq +
+        4/(n1*n2) * trSigma12
+
+    Z_Tn <- Tn / sqrt(Var_Tn)
+    pZ_Tn <- pnorm(Z_Tn, lower.tail=FALSE)
+
+    list(statistics=Z_Tn, pval=pZ_Tn,
+         nobs=c(n1=n1, n2=n2), nvar=p, method=method)
   }
 }
