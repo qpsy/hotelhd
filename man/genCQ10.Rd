@@ -3,16 +3,19 @@
 \alias{genCQ10}
 \title{Simulation data for CQ10}
 \usage{
-genCQ10(n1, n2, p, rho, eta, dist = c("gamma", "norm"))
+genCQ10(n, p, perc, dist = c("gamma", "norm"), dependence = c("two",
+  "full"), alloc = c("eq", "inc", "dec"))
 }
 \arguments{
-\item{n1}{nobs of X1}
-
-\item{n2}{nobs of X2}
+\item{n}{nobs of X1 and X2}
 
 \item{p}{number of variables}
 
 \item{dist}{gamma or norm}
+
+\item{dependence}{two or full}
+
+\item{alloc}{"eq", "inc", "dec"}
 }
 \value{
 Test results
@@ -23,15 +26,13 @@ TEST
 }
 \examples{
 \dontrun{
-res <- genBS96(n1=25, n2=20, p=40, rho=0.5, eta=0, dist="norm")
-res[["phi"]]
-res[["lambda"]]
-d1 <- res[["d1"]]
-d2 <- res[["d2"]]
-hotelhd(d1, d2, method="H")
-hotelhd(d1, d2, method="D")
-hotelhd(d1, d2, method="BS")
-hotelhd(d1, d2, method="CQ")
+res <- genCQ10(n=124, p=500, perc=50)
+X1 <- res[["X1"]]
+X2 <- res[["X2"]]
+hotelhd(X1, X2, method="H")
+hotelhd(X1, X2, method="D")
+hotelhd(X1, X2, method="BS")
+hotelhd(X1, X2, method="CQ")
 }
 }
 \author{

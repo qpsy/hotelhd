@@ -2,10 +2,11 @@
 #'
 #' TEST
 #'
-#' @param n1 nobs of X1
-#' @param n2 nobs of X2
+#' @param n nobs of X1 and X2
 #' @param p number of variables
 #' @param dist gamma or norm
+#' @param dependence two or full
+#' @param alloc "eq", "inc", "dec"
 #'
 #' @author Dongjun You
 #'
@@ -16,15 +17,13 @@
 #'
 #' @examples
 #' \dontrun{
-#' res <- genBS96(n1=25, n2=20, p=40, dist="norm")
-#' res[["phi"]]
-#' res[["lambda"]]
-#' d1 <- res[["d1"]]
-#' d2 <- res[["d2"]]
-#' hotelhd(d1, d2, method="H")
-#' hotelhd(d1, d2, method="D")
-#' hotelhd(d1, d2, method="BS")
-#' hotelhd(d1, d2, method="CQ")
+#' res <- genCQ10(n=124, p=500, perc=50)
+#' X1 <- res[["X1"]]
+#' X2 <- res[["X2"]]
+#' hotelhd(X1, X2, method="H")
+#' hotelhd(X1, X2, method="D")
+#' hotelhd(X1, X2, method="BS")
+#' hotelhd(X1, X2, method="CQ")
 #' }
 #'
 #' @export
@@ -35,24 +34,65 @@ genCQ10 <- function(n, p, perc, dist=c("gamma", "norm"),
   dist <- match.arg(dist)
   alloc <- match.arg(alloc)
 
-  gen_Z <- function(n, nAux) {
-    if (dist == "gamma") {
-      matrix(rgamma(n*(p + nAux-1), shape=4, scale=1), ncol=p + nAuxVar-1)
-    } else {
-      matrix(rnorm(n*(p + nAux-1), mean=0, sd=1), ncol=p + nAux-1)
+  if (dependence == "two") {
+    rho <- c(2.883, 2.794, 2.849)
+    nAux <- 3 - 1
+  } else {
+    rho <- runif(p, min=2, max=3)
+    nAux <- p - 1
+  }
+
+  # no need to calculate Sigma, all are diagonal with sum(rho * rho)
+  # Sigma <- diag(var_x, nrow = p)
+  # trSigma2 <- sum(diag(Sigma %*% Sigma))
+  trSigma2 <- p * sum(rho * rho)
+
+  # n of false null
+  n_F_null <- p * (100-perc)/100
+  # n of sample in the divided 4 groups
+  n_sample <- n_F_null %/% 4
+
+  if (n_F_null %% 4 == 0) sampleV <- rep(n_sample, 4)
+  else if (alloc == "inc") sampleV <-  c(rep(n_sample, 3), n_sample+1)
+  else sampleV <-  c(n_sample+1, rep(n_sample, 3))
+
+  # assume mu1 = 0, individual mu2i considering n_F_null
+  mu2i <- sqrt(sqrt(trSigma2) / n_F_null)
+  mu2pre <- vector("numeric", length = p)
+
+  assignMu <- function(cutp) {
+    intv <- findInterval(1:p, cutp)
+    foreach (i=0:3, sam=sampleV, .combine = c) %do% {
+      L <- mu2pre[intv == i]
+      L[sample(length(L), sam)] <- mu2i
+      L
     }
   }
 
-  ## TODO: set up Sigma
+  if (alloc == "eq") {
+    # find 3 cutpoints to divide 4 group
+    cutpoints <- floor(p * c(0.25, 0.5, 0.75)) + 1
+    mu2 <- assignMu(cutpoints)
 
-  ## if (dist == "gamma") {
-  ##   Sigma <- diag(rep(4*(1 + rho*rho), p))
-  ##   Sigma[(row(Sigma) + 1) == col(Sigma)] <- 4*rho
-  ##   Sigma[(row(Sigma) - 1) == col(Sigma)] <- 4*rho
-  ## } else {
-  ##   Sigma <- (1 - rho) * diag(nrow=p, ncol=p) +
-  ##       rho * matrix(1, nrow=p, ncol=p)
-  ## }
+  } else if (alloc == "inc") {
+    cutpoints <- floor(p * c(0.4, 0.7, 0.9)) + 1
+    mu2 <- assignMu(cutpoints)
+
+  } else {
+    cutpoints <- floor(p * c(0.1, 0.3, 0.6)) + 1
+    mu2 <- assignMu(cutpoints)
+  }
+
+  gen_Z <- function(n, nAux) {
+    if (dist == "gamma") {
+      matrix(rgamma(n*(p + nAux), shape=4, scale=1), ncol=p + nAux)
+    } else {
+      matrix(rnorm(n*(p + nAux), mean=0, sd=1), ncol=p + nAux)
+    }
+  }
+
+  Z1 <- gen_Z(n, nAux)
+  Z2 <- gen_Z(n, nAux)
 
   genX <- function(rhoV, Z) {
     iV <- 1:length(rhoV)
@@ -61,36 +101,9 @@ genCQ10 <- function(n, p, perc, dist=c("gamma", "norm"),
     }
   }
 
-  if (dependence == "two") {
-    rho <- c(2.883, 2.794, 2.849)
-    nAux <- 3
-  } else {
-    rho <- runif(p, min=2, max=3)
-    nAux <- p
-  }
-
-  Z1 <- gen_Z(n, nAux)
-  Z2 <- gen_Z(n, nAux)
-
   X1 <- genX(rho, Z1)
-  X2 <- genX(rho, Z2)
+  X2 <- genX(rho, Z2) + mu2
 
-  # assume mu1 = 0
-  trSigma2 <- sum(diag(Sigma %*% Sigma))
-
-  if (alloc == "eq") {
-    ## TODO: consider percentage
-    # assume the p elements of mu2 have the same value mu1i
-    # mu1i <- sqrt(eta * sqrt(trSigma2) / p)
-
-    X2 <- X2 + mu2
-  } else if (alloc == "inc") {
-
-    X2 <- X2 + mu2
-  } else {
-
-    X2 <- X2 + mu2
-  }
-
-  invisible(list(d1=d1, d2=d2, phi=phi, lambda=lambda))
+  invisible(list(X1=X1, X2=X2))
 }
+
