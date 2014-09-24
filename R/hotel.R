@@ -23,6 +23,8 @@
 #'
 #' Method "CQ" is
 #'
+#' Method "CLX" is
+#'
 #' @references
 #' will be added
 #'
@@ -35,7 +37,9 @@
 #' @import foreach
 #'
 #' @export
-hotelhd <- function(X1, X2, method=c("H", "D", "BS", "CQ"), na.rm=TRUE) {
+hotelhd <- function(X1, X2, na.rm=TRUE,
+                    method=c("H", "D", "BS", "CQ", "CLX"),
+                    iter=c("foreach", "for1")) {
   stopifnot(is.matrix(X1), is.matrix(X1))
 
   n1 <- NROW(X1)
@@ -87,18 +91,20 @@ hotelhd <- function(X1, X2, method=c("H", "D", "BS", "CQ"), na.rm=TRUE) {
     ## calculate r2
     # registerDoParallel()
     idx <- combn(3:n, 2)
-    w <- foreach (i=idx, .combine=c,
-                  .final=function(res) -sum(res)) %do% {
-           thTmp <- Y[i, ]
-           y1 <- thTmp[1, ]
-           y2 <- thTmp[2, ]
-           sinTheta <- sin(# angle of every two vectors
-               acos(sum(y1 * y2) / (sqrt(sum(y1 * y1) * sum(y2 * y2)))))
-           log(sinTheta * sinTheta)
-         }
+    idx_n <- NCOL(idx)
 
-  #sinTheta <- sin(unlist(theta))
-    #w <- -sum(log(sinTheta * sinTheta))
+    sinTheta <- vector("numeric", length=idx_n)
+    sinTheta_i <- 0
+    for (i in 3:(n-1)) {
+      y1 <- Y[i, ]
+      for (j in (i+1):n) {
+        sinTheta_i <- sinTheta_i + 1
+        y2 <- Y[j, ]
+        sinTheta[sinTheta_i] <- sin(# angle of every two vectors
+            acos(sum(y1 * y2) / sqrt(Qs[i] * Qs[j])))
+      }
+    }
+    w <- -sum(log(sinTheta * sinTheta))
 
     r2eq <- function(r2) {
       (1/r2 + (1 + 1/(n-2))/(3*r2*r2)) * (n - 3) +
@@ -133,36 +139,36 @@ hotelhd <- function(X1, X2, method=c("H", "D", "BS", "CQ"), na.rm=TRUE) {
         (sum(prod22) - sum(diag(prod22))) / (n2*(n2-1)) -
             2 * sum(tcrossprod(X1, X2)) / (n1*n2)
 
-    # registerDoParallel()
-    idx1 <- combn(1:n1, 2)
-    trSigma1Sq <- foreach (i = idx1, .combine="+",
-                    .final=function(res) 1/(n1*(n1-1)) * 2*sum(diag(res))) %do% {
-      y <- X1[i, ]
-      Xj <- y[1, , drop=FALSE]
-      Xk <- y[2, , drop=FALSE]
-      Xbar_jk <- colMeans(X1[-i, ])
-      t(Xj - Xbar_jk) %*% Xj %*% t(Xk - Xbar_jk) %*% Xk
+    caltrSigmaSq <- function(X, nn) {
+      Sigma1Sq <- matrix(0, nrow=p, ncol=p)
+      for (i in 1:(nn-1)) {
+        Xj <- X[i, , drop=FALSE]
+        for (j in (i+1):nn) {
+          Xk <- X[j, , drop=FALSE]
+          Xbar_jk <- colMeans(X[-c(i,j), ])
+          Sigma1Sq <- Sigma1Sq +
+              t(Xj - Xbar_jk) %*% Xj %*% t(Xk - Xbar_jk) %*% Xk
+        }
+      }
+      1/(n1*(n1-1)) * 2*sum(diag(Sigma1Sq))
     }
 
-    idx2 <- combn(1:n2, 2)
-    trSigma2Sq <- foreach (i = idx2, .combine="+",
-                    .final=function(res) 1/(n1*(n1-1)) * 2*sum(diag(res))) %do% {
-      y <- X2[i, ]
-      Xj <- y[1, , drop=FALSE]
-      Xk <- y[2, , drop=FALSE]
-      Xbar_jk <- colMeans(X2[-i, ])
-      t(Xj - Xbar_jk) %*% Xj %*% t(Xk - Xbar_jk) %*% Xk
-    }
+    trSigma1Sq <- caltrSigmaSq(X1, n1)
+    trSigma2Sq <- caltrSigmaSq(X2, n2)
 
-  idx3 <- expand.grid(1:n1, 1:n2)
-  trSigma12 <- foreach (j=idx3[, 1], k=idx3[, 2], .combine="+",
-                 .final=function(res) 1/(n1*n2) * sum(diag(res))) %do% {
+    Sigma12 <- matrix(0, nrow=p, ncol=p)
+    for (j in 1:n1) {
       X1j <- X1[j, , drop=FALSE]
       X1bar_j <- colMeans(X1[-j, ])
-      X2k <- X2[k, , drop=FALSE]
-      X2bar_k <- colMeans(X2[-k, ])
-      t(X1j - X1bar_j) %*% X1j %*% t(X2k - X2bar_k) %*% X2k
+      for (k in 1:n2) {
+        X2k <- X2[k, , drop=FALSE]
+        X2bar_k <- colMeans(X2[-k, ])
+        Sigma12 <- Sigma12 +
+            t(X1j - X1bar_j) %*% X1j %*% t(X2k - X2bar_k) %*% X2k
+      }
     }
+
+    trSigma12 <- 1/(n1*n2) * sum(diag(Sigma12))
 
     Var_Tn <- 2/(n1*(n1-1)) * trSigma1Sq + 2/(n2*(n2-1)) * trSigma2Sq +
         4/(n1*n2) * trSigma12
@@ -172,5 +178,7 @@ hotelhd <- function(X1, X2, method=c("H", "D", "BS", "CQ"), na.rm=TRUE) {
 
     list(statistics=Z_Tn, pval=pZ_Tn,
          nobs=c(n1=n1, n2=n2), nvar=p, method=method)
+  } else if (method=="CLX") {
+    M_Sig <- n1*n2/n
   }
 }

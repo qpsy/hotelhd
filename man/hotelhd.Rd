@@ -3,17 +3,18 @@
 \alias{hotelhd}
 \title{Hotelling's Test with High Dimensional Data}
 \usage{
-hotelhd(X1, X2, method = c("H", "D", "BS", "CQ"), na.rm = TRUE)
+hotelhd(X1, X2, na.rm = TRUE, method = c("H", "D", "BS", "CQ", "CLX"),
+  iter = c("foreach", "for1"))
 }
 \arguments{
 \item{X1}{a n1 by p data matrix. Only a matrix can be used.}
 
 \item{X2}{a n2 by p data matrix.}
 
-\item{method}{method to be used. See 'Details'.}
-
 \item{na.rm}{logical value of TRUE or FALSE.
 option for calculating means of p varuables}
+
+\item{method}{method to be used. See 'Details'.}
 }
 \value{
 Test results
@@ -30,6 +31,8 @@ Method "D" is
 Method "BS" is
 
 Method "CQ" is
+
+Method "CLX" is
 }
 \examples{
 \dontrun{
