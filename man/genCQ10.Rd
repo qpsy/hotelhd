@@ -4,7 +4,7 @@
 \title{Simulation data for CQ10}
 \usage{
 genCQ10(n, p, perc, dist = c("gamma", "norm"), dependence = c("two",
-  "full"), alloc = c("eq", "inc", "dec"))
+  "full"))
 }
 \arguments{
 \item{n}{nobs of X1 and X2}
@@ -14,8 +14,6 @@ genCQ10(n, p, perc, dist = c("gamma", "norm"), dependence = c("two",
 \item{dist}{gamma or norm}
 
 \item{dependence}{two or full}
-
-\item{alloc}{"eq", "inc", "dec"}
 }
 \value{
 Test results

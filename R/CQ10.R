@@ -6,7 +6,6 @@
 #' @param p number of variables
 #' @param dist gamma or norm
 #' @param dependence two or full
-#' @param alloc "eq", "inc", "dec"
 #'
 #' @author Dongjun You
 #'
@@ -28,11 +27,9 @@
 #'
 #' @export
 genCQ10 <- function(n, p, perc, dist=c("gamma", "norm"),
-                    dependence=c("two", "full"),
-                    alloc=c("eq", "inc", "dec")) {
+                    dependence=c("two", "full")) {
   dependence <- match.arg(dependence)
   dist <- match.arg(dist)
-  alloc <- match.arg(alloc)
 
   if (dependence == "two") {
     rho <- c(2.883, 2.794, 2.849)
@@ -42,46 +39,30 @@ genCQ10 <- function(n, p, perc, dist=c("gamma", "norm"),
     nAux <- p - 1
   }
 
-  # no need to calculate Sigma, all are diagonal with sum(rho * rho)
-  # Sigma <- diag(var_x, nrow = p)
-  # trSigma2 <- sum(diag(Sigma %*% Sigma))
-  trSigma2 <- p * sum(rho * rho)
+  # true Sigma, considering moving average model with independent variables
+  #  : to be band diagonal matrix
+  Mdim <- length(rho)
+  Sigma <- foreach (i=1:(Mdim-1), .combine="+",
+           .final=function(res) {
+             t(res) + res + diag2(sum(rho*rho), p, p)
+             } ) %do% {
+    bandVal <- t(rho) %*% diag2(1, Mdim, Mdim, i) %*% rho
+    diag2(bandVal, p, p, i)
+  }
+
+  trSigma2 <- sum(diag(Sigma %*% Sigma))
 
   # n of false null
   n_F_null <- p * (100-perc)/100
-  # n of sample in the divided 4 groups
-  n_sample <- n_F_null %/% 4
-
-  if (n_F_null %% 4 == 0) sampleV <- rep(n_sample, 4)
-  else if (alloc == "inc") sampleV <-  c(rep(n_sample, 3), n_sample+1)
-  else sampleV <-  c(n_sample+1, rep(n_sample, 3))
 
   # assume mu1 = 0, individual mu2i considering n_F_null
   mu2i <- sqrt(sqrt(trSigma2) / n_F_null)
   mu2pre <- vector("numeric", length = p)
 
-  assignMu <- function(cutp) {
-    intv <- findInterval(1:p, cutp)
-    foreach (i=0:3, sam=sampleV, .combine = c) %do% {
-      L <- mu2pre[intv == i]
-      L[sample(length(L), sam)] <- mu2i
-      L
-    }
-  }
-
-  if (alloc == "eq") {
-    # find 3 cutpoints to divide 4 group
-    cutpoints <- floor(p * c(0.25, 0.5, 0.75)) + 1
-    mu2 <- assignMu(cutpoints)
-
-  } else if (alloc == "inc") {
-    cutpoints <- floor(p * c(0.4, 0.7, 0.9)) + 1
-    mu2 <- assignMu(cutpoints)
-
-  } else {
-    cutpoints <- floor(p * c(0.1, 0.3, 0.6)) + 1
-    mu2 <- assignMu(cutpoints)
-  }
+  # ignore 'allocation' options
+  # simply sample the n of false null
+  if (perc != 100) mu2pre[sample(p, n_F_null)] <- mu2i
+  mu2 <- rep(1, times=n) %*% t(mu2pre)
 
   gen_Z <- function(n, nAux) {
     if (dist == "gamma") {
