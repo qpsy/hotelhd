@@ -3,8 +3,7 @@
 \alias{hotelhd}
 \title{Hotelling's Test with High Dimensional Data}
 \usage{
-hotelhd(X1, X2, na.rm = TRUE, method = c("H", "D", "BS", "CQ", "CLX"),
-  iter = c("foreach", "for1"))
+hotelhd(X1, X2, na.rm = TRUE, method = c("H", "D", "BS", "CQ", "CLX"))
 }
 \arguments{
 \item{X1}{a n1 by p data matrix. Only a matrix can be used.}

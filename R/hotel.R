@@ -38,8 +38,7 @@
 #'
 #' @export
 hotelhd <- function(X1, X2, na.rm=TRUE,
-                    method=c("H", "D", "BS", "CQ", "CLX"),
-                    iter=c("foreach", "for1")) {
+                    method=c("H", "D", "BS", "CQ", "CLX")) {
   stopifnot(is.matrix(X1), is.matrix(X1))
 
   n1 <- NROW(X1)
