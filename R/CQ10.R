@@ -4,6 +4,7 @@
 #'
 #' @param n nobs of X1 and X2
 #' @param p number of variables
+#' @param perc percentages
 #' @param dist gamma or norm
 #' @param dependence two or full
 #'
@@ -41,6 +42,7 @@ genCQ10 <- function(n, p, perc, dist=c("gamma", "norm"),
 
   # true Sigma, considering moving average model with independent variables
   #  : to be band diagonal matrix
+  i <- NULL
   Mdim <- length(rho)
   Sigma <- foreach (i=1:(Mdim-1), .combine="+",
            .final=function(res) {
@@ -76,6 +78,7 @@ genCQ10 <- function(n, p, perc, dist=c("gamma", "norm"),
   Z2 <- gen_Z(n, nAux)
 
   genX <- function(rhoV, Z) {
+    i <- NULL
     iV <- 1:length(rhoV)
     foreach (i=iV, rho=rhoV, .combine="+") %do% {
       rho * Z[, i:(p+i-1)]
@@ -87,4 +90,3 @@ genCQ10 <- function(n, p, perc, dist=c("gamma", "norm"),
 
   invisible(list(X1=X1, X2=X2))
 }
-

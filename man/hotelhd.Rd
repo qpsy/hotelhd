@@ -33,10 +33,6 @@ Method "CQ" is
 
 Method "CLX" is
 }
-\examples{
-\dontrun{
-}
-}
 \author{
 Dongjun You
 }

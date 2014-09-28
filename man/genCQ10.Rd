@@ -11,6 +11,8 @@ genCQ10(n, p, perc, dist = c("gamma", "norm"), dependence = c("two",
 
 \item{p}{number of variables}
 
+\item{perc}{percentages}
+
 \item{dist}{gamma or norm}
 
 \item{dependence}{two or full}

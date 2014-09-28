@@ -12,6 +12,10 @@ genBS96(n1, n2, p, rho, eta, dist = c("gamma", "norm"))
 
 \item{p}{number of variables}
 
+\item{rho}{rho}
+
+\item{eta}{eta}
+
 \item{dist}{gamma or norm}
 }
 \value{

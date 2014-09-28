@@ -6,11 +6,11 @@
 diag2(x = 1, nrow, ncol, off = 0)
 }
 \arguments{
-\item{x}{}
+\item{x}{a value to be filled}
 
-\item{nrow}{}
+\item{nrow}{nrow}
 
-\item{ncol}{}
+\item{ncol}{ncol}
 
 \item{off}{an integer. location of off-diagonal}
 }
@@ -19,13 +19,6 @@ Test results
 }
 \description{
 text
-}
-\details{
-...
-}
-\examples{
-\dontrun{
-}
 }
 \author{
 Dongjun You

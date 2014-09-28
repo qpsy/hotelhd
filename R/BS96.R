@@ -5,6 +5,8 @@
 #' @param n1 nobs of X1
 #' @param n2 nobs of X2
 #' @param p number of variables
+#' @param rho rho
+#' @param eta eta
 #' @param dist gamma or norm
 #'
 #' @author Dongjun You

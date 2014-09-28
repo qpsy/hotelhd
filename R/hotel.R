@@ -28,13 +28,10 @@
 #' @references
 #' will be added
 #'
-#'
-#' @examples
-#' \dontrun{
-#' }
-#'
 #' @importFrom nleqslv nleqslv
 #' @import foreach
+#' @import clime
+#' @useDynLib hotelhd
 #'
 #' @export
 hotelhd <- function(X1, X2, na.rm=TRUE,
@@ -88,7 +85,6 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     r1 <- nleqslv(10, r1eq)$x
 
     ## calculate r2
-    # registerDoParallel()
     idx <- combn(3:n, 2)
     idx_n <- NCOL(idx)
 
@@ -138,36 +134,41 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
         (sum(prod22) - sum(diag(prod22))) / (n2*(n2-1)) -
             2 * sum(tcrossprod(X1, X2)) / (n1*n2)
 
-    caltrSigmaSq <- function(X, nn) {
-      Sigma1Sq <- matrix(0, nrow=p, ncol=p)
-      for (i in 1:(nn-1)) {
-        Xj <- X[i, , drop=FALSE]
-        for (j in (i+1):nn) {
-          Xk <- X[j, , drop=FALSE]
-          Xbar_jk <- colMeans(X[-c(i,j), ])
-          Sigma1Sq <- Sigma1Sq +
-              t(Xj - Xbar_jk) %*% Xj %*% t(Xk - Xbar_jk) %*% Xk
-        }
-      }
-      1/(n1*(n1-1)) * 2*sum(diag(Sigma1Sq))
-    }
+    ## caltrSigmaSq <- function(X, nn) {
+    ##   Sigma1Sq <- matrix(0, nrow=p, ncol=p)
+    ##   for (i in 1:(nn-1)) {
+    ##     Xj <- X[i, , drop=FALSE]
+    ##     for (j in (i+1):nn) {
+    ##       Xk <- X[j, , drop=FALSE]
+    ##       Xbar_jk <- colMeans(X[-c(i,j), ])
+    ##       Sigma1Sq <- Sigma1Sq +
+    ##           t(Xj - Xbar_jk) %*% Xj %*% t(Xk - Xbar_jk) %*% Xk
+    ##     }
+    ##   }
+    ##   1/(nn*(nn-1)) * 2*sum(diag(Sigma1Sq))
+    ## }
 
-    trSigma1Sq <- caltrSigmaSq(X1, n1)
-    trSigma2Sq <- caltrSigmaSq(X2, n2)
+    ## trSigma1Sq <- caltrSigmaSq(X1, n1)
+    ## trSigma2Sq <- caltrSigmaSq(X2, n2)
 
-    Sigma12 <- matrix(0, nrow=p, ncol=p)
-    for (j in 1:n1) {
-      X1j <- X1[j, , drop=FALSE]
-      X1bar_j <- colMeans(X1[-j, ])
-      for (k in 1:n2) {
-        X2k <- X2[k, , drop=FALSE]
-        X2bar_k <- colMeans(X2[-k, ])
-        Sigma12 <- Sigma12 +
-            t(X1j - X1bar_j) %*% X1j %*% t(X2k - X2bar_k) %*% X2k
-      }
-    }
+    ## Sigma12 <- matrix(0, nrow=p, ncol=p)
+    ## for (j in 1:n1) {
+    ##   X1j <- X1[j, , drop=FALSE]
+    ##   X1bar_j <- colMeans(X1[-j, ])
+    ##   for (k in 1:n2) {
+    ##     X2k <- X2[k, , drop=FALSE]
+    ##     X2bar_k <- colMeans(X2[-k, ])
+    ##     Sigma12 <- Sigma12 +
+    ##         t(X1j - X1bar_j) %*% X1j %*% t(X2k - X2bar_k) %*% X2k
+    ##   }
+    ## }
 
-    trSigma12 <- 1/(n1*n2) * sum(diag(Sigma12))
+    ## trSigma12 <- 1/(n1*n2) * sum(diag(Sigma12))
+
+    trSigma1Sq <- caltrSigmaSqC(X1, n1, p)
+    trSigma2Sq <- caltrSigmaSqC(X2, n2, p)
+    trSigma12 <- caltrSigma12C(X1, X2, n1, n2, p)
+
 
     Var_Tn <- 2/(n1*(n1-1)) * trSigma1Sq + 2/(n2*(n2-1)) * trSigma2Sq +
         4/(n1*n2) * trSigma12
@@ -177,7 +178,9 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
 
     list(statistics=Z_Tn, pval=pZ_Tn,
          nobs=c(n1=n1, n2=n2), nvar=p, method=method)
+
   } else if (method=="CLX") {
-    M_Sig <- n1*n2/n
+    Sigma_n <- (n1*cov(X1) + n2*cov(X2)) / n
+
   }
 }
