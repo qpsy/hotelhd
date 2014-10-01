@@ -8,7 +8,8 @@
 #' @param X2 a n2 by p data matrix.
 #' @param method method to be used. See 'Details'.
 #' @param na.rm logical value of TRUE or FALSE.
-#' option for calculating means of p varuables
+#'   option for calculating means of p varuables
+#' @param C a constant to decide lambda_n for 'CLX', See Cai et al. (2011).
 #'
 #' @author Dongjun You
 #'
@@ -23,18 +24,24 @@
 #'
 #' Method "CQ" is
 #'
-#' Method "CLX" is
+#' Method "CLX" is using CLIME to estimate Omega. The current version
+#'   uses the default options of 'fastclime' function of
+#'   'fastclime' package.
+#'   Whether the null is rejected or not is only included in the result,
+#'   because of the form of asymptotic distribution of the test statistics.
+#'   A function 'rejected' for hypothesis test will be returned, which
+#'   needs an argument 'alpha' to test Whether the null is rejected or not.
 #'
 #' @references
 #' will be added
 #'
 #' @importFrom nleqslv nleqslv
-#' @import foreach
 #' @import clime
+#' @import Rcpp
 #' @useDynLib hotelhd
 #'
 #' @export
-hotelhd <- function(X1, X2, na.rm=TRUE,
+hotelhd <- function(X1, X2, na.rm=TRUE, C=10,
                     method=c("H", "D", "BS", "CQ", "CLX")) {
   stopifnot(is.matrix(X1), is.matrix(X1))
 
@@ -51,7 +58,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
   X1bar <- colMeans(X1, na.rm=na.rm)
   X2bar <- colMeans(X2, na.rm=na.rm)
   meanDiff <- X1bar - X2bar
-  S <- ((n1 - 1) * cov(X1) + (n2 - 1) * cov(X2))/(n - 2)
+  S <- ((n1 - 1) * var(X1) + (n2 - 1) * var(X2))/(n - 2)
 
   method <- match.arg(method)
 
@@ -180,7 +187,27 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
          nobs=c(n1=n1, n2=n2), nvar=p, method=method)
 
   } else if (method=="CLX") {
-    Sigma_n <- (n1*cov(X1) + n2*cov(X2)) / n
+    lambda <- C * (log(p)/n)
 
+    ## clime package
+    Omega <- clime(S, sigma=TRUE, lambda=lambda)$Omegalist[[1]]
+
+    ## fastclime package
+    #fc <- suppressMessages(fastclime(S))
+    #Omega <- fastclime.lambda(fc$lambdamtx, fc$icovlist, lambda)$icov
+
+    Z <- Omega %*% (X1bar - X2bar)
+    omega1 <- var(X1 %*% t(Omega))
+    omega2 <- var(X2 %*% t(Omega))
+    omega0 <- diag(n1/n * omega1 + n2/n * omega2)
+
+    M <- n1*n2/n * max((Z*Z) / omega0)
+    part1 <- 2*log(p) - log(log(p)) - log(pi)
+    #rejected <- M >= 2*log(p) - log(log(p)) - log(pi) - 2*log(log(1/(1-alpha)))
+    rejected <- function(alpha) {
+      M >= part1 - 2*log(log(1/(1-alpha)))
+    }
+
+    list(statistic=M, rejected=rejected)
   }
 }

@@ -3,7 +3,8 @@
 \alias{hotelhd}
 \title{Hotelling's Test with High Dimensional Data}
 \usage{
-hotelhd(X1, X2, na.rm = TRUE, method = c("H", "D", "BS", "CQ", "CLX"))
+hotelhd(X1, X2, na.rm = TRUE, C = 10, method = c("H", "D", "BS", "CQ",
+  "CLX"))
 }
 \arguments{
 \item{X1}{a n1 by p data matrix. Only a matrix can be used.}
@@ -12,6 +13,8 @@ hotelhd(X1, X2, na.rm = TRUE, method = c("H", "D", "BS", "CQ", "CLX"))
 
 \item{na.rm}{logical value of TRUE or FALSE.
 option for calculating means of p varuables}
+
+\item{C}{a constant to decide lambda_n for 'CLX', See Cai et al. (2011).}
 
 \item{method}{method to be used. See 'Details'.}
 }
@@ -31,7 +34,13 @@ Method "BS" is
 
 Method "CQ" is
 
-Method "CLX" is
+Method "CLX" is using CLIME to estimate Omega. The current version
+  uses the default options of 'fastclime' function of
+  'fastclime' package.
+  Whether the null is rejected or not is only included in the result,
+  because of the form of asymptotic distribution of the test statistics.
+  A function 'rejected' for hypothesis test will be returned, which
+  needs an argument 'alpha' to test Whether the null is rejected or not.
 }
 \author{
 Dongjun You

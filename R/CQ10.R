@@ -26,6 +26,8 @@
 #' hotelhd(X1, X2, method="CQ")
 #' }
 #'
+#' @import foreach
+#'
 #' @export
 genCQ10 <- function(n, p, perc, dist=c("gamma", "norm"),
                     dependence=c("two", "full")) {

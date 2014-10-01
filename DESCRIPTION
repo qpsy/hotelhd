@@ -9,6 +9,9 @@ License: GPL-2 | GPL-3
 LazyData: true
 Imports:
     nleqslv,
+    clime,
+    magic,
+    MASS,
     foreach,
-    clime
+    Rcpp
 LinkingTo: Rcpp, RcppArmadillo

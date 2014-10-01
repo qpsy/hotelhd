@@ -2,9 +2,13 @@
 
 export(diag2)
 export(genBS96)
+export(genCLX14)
 export(genCQ10)
 export(hotelhd)
+import(Rcpp)
 import(clime)
 import(foreach)
+importFrom(MASS,mvrnorm)
+importFrom(magic,adiag)
 importFrom(nleqslv,nleqslv)
 useDynLib(hotelhd)
