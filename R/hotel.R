@@ -6,10 +6,13 @@
 #'
 #' @param X1 a n1 by p data matrix. Only a matrix can be used.
 #' @param X2 a n2 by p data matrix.
-#' @param method method to be used. See 'Details'.
 #' @param na.rm logical value of TRUE or FALSE.
 #'   option for calculating means of p varuables
+#' @param method method to be used. See 'Details'.
 #' @param C a constant to decide lambda_n for 'CLX', See Cai et al. (2011).
+#' @param omega a character value. the estimation of Omega matrix for 'CLX'.
+#'   'clime' for clime, 'ada' for Adaptive Thresholding.
+#'   The definition of 'ada' follows CLX14's approach for two-sample test.
 #'
 #' @author Dongjun You
 #'
@@ -32,6 +35,8 @@
 #'   A function 'rejected' for hypothesis test will be returned, which
 #'   needs an argument 'alpha' to test Whether the null is rejected or not.
 #'
+#' Method "Z" is
+#'
 #' @references
 #' will be added
 #'
@@ -41,8 +46,9 @@
 #' @useDynLib hotelhd
 #'
 #' @export
-hotelhd <- function(X1, X2, na.rm=TRUE, C=10,
-                    method=c("H", "D", "BS", "CQ", "CLX")) {
+hotelhd <- function(X1, X2, na.rm=TRUE,
+                    method=c("H", "D", "BS", "CQ", "CLX", "Z"),
+                    C=10, omega=c("clime", "ada")) {
   stopifnot(is.matrix(X1), is.matrix(X1))
 
   n1 <- NROW(X1)
@@ -58,7 +64,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE, C=10,
   X1bar <- colMeans(X1, na.rm=na.rm)
   X2bar <- colMeans(X2, na.rm=na.rm)
   meanDiff <- X1bar - X2bar
-  S <- ((n1 - 1) * var(X1) + (n2 - 1) * var(X2))/(n - 2)
+  S <- ((n1 - 1)*var(X1) + (n2 - 1)*var(X2)) / (n - 2)
 
   method <- match.arg(method)
 
@@ -189,12 +195,25 @@ hotelhd <- function(X1, X2, na.rm=TRUE, C=10,
   } else if (method=="CLX") {
     lambda <- C * (log(p)/n)
 
-    ## clime package
-    Omega <- clime(S, sigma=TRUE, lambda=lambda)$Omegalist[[1]]
+    if (omega == "clime") {
+      ## clime package
+      Omega <- clime(S, sigma=TRUE, lambda=lambda)$Omegalist[[1]]
 
-    ## fastclime package
-    #fc <- suppressMessages(fastclime(S))
-    #Omega <- fastclime.lambda(fc$lambdamtx, fc$icovlist, lambda)$icov
+      ## fastclime package
+      #fc <- suppressMessages(fastclime(S))
+      #Omega <- fastclime.lambda(fc$lambdamtx, fc$icovlist, lambda)$icov
+
+    } else if (omega == "ada") {
+      delta <- 2
+      ss1 <- (sweep(X1, 2, X1bar))^2
+      ss2 <- (sweep(X2, 2, X2bar))^2
+      theta <- (t(ss1) %*% ss1 + (2-n1)*(var(X1))^2 +
+                t(ss2) %*% ss2 + (2-n2)*(var(X2))^2) / n
+
+      lambda <- delta * sqrt(log(p)*theta / n)
+      Sstar <- S * (abs(S) >= lambda)
+      Omega <- solve(Sstar)
+    }
 
     Z <- Omega %*% (X1bar - X2bar)
     omega1 <- var(X1 %*% t(Omega))
@@ -209,5 +228,21 @@ hotelhd <- function(X1, X2, na.rm=TRUE, C=10,
     }
 
     list(statistic=M, rejected=rejected)
+
+  } else if (method == "Z") {
+    lambda <- C * (log(p)/n)
+
+    ## clime package
+    Omega <- clime(S, sigma=TRUE, lambda=lambda)$Omegalist[[1]]
+
+    ## fastclime package
+    #fc <- suppressMessages(fastclime(S))
+    #Omega <- fastclime.lambda(fc$lambdamtx, fc$icovlist, lambda)$icov
+
+    Z <- Omega %*% (X1bar - X2bar)
+    omega1 <- var(X1 %*% t(Omega))
+    omega2 <- var(X2 %*% t(Omega))
+    omega0 <- diag(n1/n * omega1 + n2/n * omega2)
+
   }
 }

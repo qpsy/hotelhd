@@ -3,8 +3,8 @@
 \alias{hotelhd}
 \title{Hotelling's Test with High Dimensional Data}
 \usage{
-hotelhd(X1, X2, na.rm = TRUE, C = 10, method = c("H", "D", "BS", "CQ",
-  "CLX"))
+hotelhd(X1, X2, na.rm = TRUE, method = c("H", "D", "BS", "CQ", "CLX", "Z"),
+  C = 10, omega = c("clime", "ada"))
 }
 \arguments{
 \item{X1}{a n1 by p data matrix. Only a matrix can be used.}
@@ -14,9 +14,13 @@ hotelhd(X1, X2, na.rm = TRUE, C = 10, method = c("H", "D", "BS", "CQ",
 \item{na.rm}{logical value of TRUE or FALSE.
 option for calculating means of p varuables}
 
+\item{method}{method to be used. See 'Details'.}
+
 \item{C}{a constant to decide lambda_n for 'CLX', See Cai et al. (2011).}
 
-\item{method}{method to be used. See 'Details'.}
+\item{omega}{a character value. the estimation of Omega matrix for 'CLX'.
+  'clime' for clime, 'ada' for Adaptive Thresholding.
+  The definition of 'ada' follows CLX14's approach for two-sample test.}
 }
 \value{
 Test results
@@ -41,6 +45,8 @@ Method "CLX" is using CLIME to estimate Omega. The current version
   because of the form of asymptotic distribution of the test statistics.
   A function 'rejected' for hypothesis test will be returned, which
   needs an argument 'alpha' to test Whether the null is rejected or not.
+
+Method "Z" is
 }
 \author{
 Dongjun You

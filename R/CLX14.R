@@ -21,7 +21,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' res <- genCLX14(n=124, p=500, perc=50)
+#' res <- genCLX14(n=50, p=50)
 #' X1 <- res[["X1"]]
 #' X2 <- res[["X2"]]
 #' hotelhd(X1, X2, method="H")
