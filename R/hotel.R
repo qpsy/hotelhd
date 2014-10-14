@@ -4,7 +4,7 @@
 #' the same variables and the same order of the variables
 #'
 #'
-#' @param X1 a n1 by p data matrix. Only a matrix can be used.
+#' @param X1 a n1 by p data matrix. See Details.
 #' @param X2 a n2 by p data matrix.
 #' @param na.rm logical value of TRUE or FALSE.
 #'   option for calculating means of p varuables
@@ -13,15 +13,17 @@
 #' @param omega a character value. the estimation of Omega matrix for 'CLX'.
 #'   'clime' for clime, 'ada' for Adaptive Thresholding.
 #'   The definition of 'ada' follows CLX14's approach for two-sample test.
-#'
-#' @author Dongjun You
+#' @param R a numeric value. The number of bootstrap statistics for 'Z'.
 #'
 #' @return Test results
 #'
 #' @details
-#' Method "H" is ...
+#' Data 'X1' and 'X2' only accept matrix as arguments. All the methods
+#' implemented in this package assume continuous variables as inputs.
 #'
-#' Method "D" is
+#' Method "H" is for Hotelling's T2 test.
+#'
+#' Method "D" is for Dempster's (1958) non-exact test.
 #'
 #' Method "BS" is
 #'
@@ -35,10 +37,9 @@
 #'   A function 'rejected' for hypothesis test will be returned, which
 #'   needs an argument 'alpha' to test Whether the null is rejected or not.
 #'
-#' Method "Z" is
 #'
 #' @references
-#' will be added
+#' Dempster, A. P. (1958). A high dimensional two sample significance test. \emph{The Annals of Mathematical Statistics}, 995-1010.
 #'
 #' @importFrom nleqslv nleqslv
 #' @import clime
@@ -48,7 +49,7 @@
 #' @export
 hotelhd <- function(X1, X2, na.rm=TRUE,
                     method=c("H", "D", "BS", "CQ", "CLX", "Z"),
-                    C=10, omega=c("clime", "ada")) {
+                    C=10, omega=c("clime", "ada"), R=500) {
   stopifnot(is.matrix(X1), is.matrix(X1))
 
   n1 <- NROW(X1)
@@ -65,6 +66,31 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
   X2bar <- colMeans(X2, na.rm=na.rm)
   meanDiff <- X1bar - X2bar
   S <- ((n1 - 1)*var(X1) + (n2 - 1)*var(X2)) / (n - 2)
+
+  omega <- match.arg(omega)
+  calcOmega <- function() {
+    lambda <- C * (log(p)/n)
+
+    if (omega == "clime") {
+      ## clime package
+      clime(S, sigma=TRUE, lambda=lambda)$Omegalist[[1]]
+
+      ## fastclime package
+      #fc <- suppressMessages(fastclime(S))
+      #Omega <- fastclime.lambda(fc$lambdamtx, fc$icovlist, lambda)$icov
+
+    } else if (omega == "ada") {
+      delta <- 2
+      ss1 <- (sweep(X1, 2, X1bar))^2
+      ss2 <- (sweep(X2, 2, X2bar))^2
+      theta <- (t(ss1) %*% ss1 + (2-n1)*(var(X1))^2 +
+                    t(ss2) %*% ss2 + (2-n2)*(var(X2))^2) / n
+
+      lambda <- delta * sqrt(log(p)*theta / n)
+      Sstar <- S * (abs(S) >= lambda)
+      solve(Sstar)
+    }
+  }
 
   method <- match.arg(method)
 
@@ -193,27 +219,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
          nobs=c(n1=n1, n2=n2), nvar=p, method=method)
 
   } else if (method=="CLX") {
-    lambda <- C * (log(p)/n)
-
-    if (omega == "clime") {
-      ## clime package
-      Omega <- clime(S, sigma=TRUE, lambda=lambda)$Omegalist[[1]]
-
-      ## fastclime package
-      #fc <- suppressMessages(fastclime(S))
-      #Omega <- fastclime.lambda(fc$lambdamtx, fc$icovlist, lambda)$icov
-
-    } else if (omega == "ada") {
-      delta <- 2
-      ss1 <- (sweep(X1, 2, X1bar))^2
-      ss2 <- (sweep(X2, 2, X2bar))^2
-      theta <- (t(ss1) %*% ss1 + (2-n1)*(var(X1))^2 +
-                t(ss2) %*% ss2 + (2-n2)*(var(X2))^2) / n
-
-      lambda <- delta * sqrt(log(p)*theta / n)
-      Sstar <- S * (abs(S) >= lambda)
-      Omega <- solve(Sstar)
-    }
+    Omega <- calcOmega()
 
     Z <- Omega %*% (X1bar - X2bar)
     omega1 <- var(X1 %*% t(Omega))
@@ -230,19 +236,31 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     list(statistic=M, rejected=rejected)
 
   } else if (method == "Z") {
-    lambda <- C * (log(p)/n)
-
-    ## clime package
-    Omega <- clime(S, sigma=TRUE, lambda=lambda)$Omegalist[[1]]
-
-    ## fastclime package
-    #fc <- suppressMessages(fastclime(S))
-    #Omega <- fastclime.lambda(fc$lambdamtx, fc$icovlist, lambda)$icov
+    Omega <- calcOmega()
 
     Z <- Omega %*% (X1bar - X2bar)
     omega1 <- var(X1 %*% t(Omega))
     omega2 <- var(X2 %*% t(Omega))
-    omega0 <- diag(n1/n * omega1 + n2/n * omega2)
+    omega0sqrt <- sqrt(diag(n1/n * omega1 + n2/n * omega2))
 
+    ## test statistics
+    sqnn <- sqrt(n1*n2/n)
+    T <- max(abs(sqnn * Z))
+    Tt <- max(abs(sqnn * Z / omega0sqrt))
+
+    XI1 <- X1 %*% Omega
+    XI2 <- X2 %*% Omega
+    XI1bar <- colMeans(XI1)
+    XI2bar <- colMeans(XI2)
+
+    quantile(
+    vapply(1:R, function(i) {
+    max(sqnn *
+      (colMeans(sweep(sweep(XI1, 2, XI1bar, check.margin=FALSE),
+                      1, rnorm(n1), FUN="*", check.margin=FALSE)) -
+         colMeans(sweep(sweep(XI1, 2, XI2bar, check.margin=FALSE),
+                        1, rnorm(n2), FUN="*", check.margin=FALSE))))},
+           FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE),
+        1 - alpha, names=FALSE)
   }
 }

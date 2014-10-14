@@ -4,10 +4,10 @@
 \title{Hotelling's Test with High Dimensional Data}
 \usage{
 hotelhd(X1, X2, na.rm = TRUE, method = c("H", "D", "BS", "CQ", "CLX", "Z"),
-  C = 10, omega = c("clime", "ada"))
+  C = 10, omega = c("clime", "ada"), R = 500)
 }
 \arguments{
-\item{X1}{a n1 by p data matrix. Only a matrix can be used.}
+\item{X1}{a n1 by p data matrix. See Details.}
 
 \item{X2}{a n2 by p data matrix.}
 
@@ -19,8 +19,10 @@ option for calculating means of p varuables}
 \item{C}{a constant to decide lambda_n for 'CLX', See Cai et al. (2011).}
 
 \item{omega}{a character value. the estimation of Omega matrix for 'CLX'.
-  'clime' for clime, 'ada' for Adaptive Thresholding.
-  The definition of 'ada' follows CLX14's approach for two-sample test.}
+'clime' for clime, 'ada' for Adaptive Thresholding.
+The definition of 'ada' follows CLX14's approach for two-sample test.}
+
+\item{R}{a numeric value. The number of bootstrap statistics for 'Z'.}
 }
 \value{
 Test results
@@ -30,9 +32,12 @@ Users should take care to ensure that the two dataset have
 the same variables and the same order of the variables
 }
 \details{
-Method "H" is ...
+Data 'X1' and 'X2' only accept matrix as arguments. All the methods
+implemented in this package assume continuous variables as inputs.
 
-Method "D" is
+Method "H" is for Hotelling's T2 test.
+
+Method "D" is for Dempster's non-exact test.
 
 Method "BS" is
 
@@ -48,10 +53,7 @@ Method "CLX" is using CLIME to estimate Omega. The current version
 
 Method "Z" is
 }
-\author{
-Dongjun You
-}
 \references{
-will be added
+Dempster, A. P. (1958). A high dimensional two sample significance test. \emph{The Annals of Mathematical Statistics}, 995-1010.
 }
 
