@@ -37,7 +37,7 @@ implemented in this package assume continuous variables as inputs.
 
 Method "H" is for Hotelling's T2 test.
 
-Method "D" is for Dempster's non-exact test.
+Method "D" is for Dempster's (1958) non-exact test.
 
 Method "BS" is
 
@@ -50,8 +50,6 @@ Method "CLX" is using CLIME to estimate Omega. The current version
   because of the form of asymptotic distribution of the test statistics.
   A function 'rejected' for hypothesis test will be returned, which
   needs an argument 'alpha' to test Whether the null is rejected or not.
-
-Method "Z" is
 }
 \references{
 Dempster, A. P. (1958). A high dimensional two sample significance test. \emph{The Annals of Mathematical Statistics}, 995-1010.
