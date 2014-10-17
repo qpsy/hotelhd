@@ -4,7 +4,7 @@
 \title{Hotelling's Test with High Dimensional Data}
 \usage{
 hotelhd(X1, X2, na.rm = TRUE, method = c("H", "D", "BS", "CQ", "CLX", "Z"),
-  C = 10, omega = c("clime", "ada"), R = 500)
+  C = 10, omega = c("clime", "ada"), R = 500, block = 1, alpha = 0.05)
 }
 \arguments{
 \item{X1}{a n1 by p data matrix. See Details.}
@@ -23,6 +23,12 @@ option for calculating means of p varuables}
 The definition of 'ada' follows CLX14's approach for two-sample test.}
 
 \item{R}{a numeric value. The number of bootstrap statistics for 'Z'.}
+
+\item{block}{a numeric value. A block size for blockwize multiplier
+bootstrap in the method 'Z'. The size should be smaller
+than min(n1, n2). The default value is 1.}
+
+\item{alpha}{a numeric value. The type 1 error.}
 }
 \value{
 Test results

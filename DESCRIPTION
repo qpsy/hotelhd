@@ -10,8 +10,5 @@ LazyData: true
 Imports:
     nleqslv,
     clime,
-    magic,
-    MASS,
-    foreach,
     Rcpp
 LinkingTo: Rcpp, RcppArmadillo
