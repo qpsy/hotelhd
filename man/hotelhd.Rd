@@ -4,12 +4,11 @@
 \title{Hotelling's Test with High Dimensional Data}
 \usage{
 hotelhd(X1, X2, na.rm = TRUE, method = c("H", "D", "BS", "CQ", "CLX", "Z"),
-  C = 10, omega = c("clime", "ada"), R = 500, block = 1, alpha = 0.05)
+  C = 10, omegaHat = c("omega", "identity"), omegaEst = c("clime", "ada"),
+  R = 500, block = 1, alpha = 0.05)
 }
 \arguments{
-\item{X1}{a n1 by p data matrix. See Details.}
-
-\item{X2}{a n2 by p data matrix.}
+\item{X1,X2}{n1(,n2) by p data matrix. See Details.}
 
 \item{na.rm}{logical value of TRUE or FALSE.
 option for calculating means of p varuables}
@@ -18,13 +17,20 @@ option for calculating means of p varuables}
 
 \item{C}{a constant to decide lambda_n for 'CLX', See Cai et al. (2011).}
 
-\item{omega}{a character value. the estimation of Omega matrix for 'CLX'.
+\item{omegaHat}{A candidate estimate of Omega matrix for the two
+maximum
+type metods, 'CLX' and 'Z'. When the default 'omega' is used,
+Omega will be estimated, See 'omegaHat' argument. Optionally,
+'identity' can be choosen to set p by p Identity matrix as
+the estimate of Omega matrix.}
+
+\item{omegaEst}{The estimation method for Omega matrix for 'CLX'.
 'clime' for clime, 'ada' for Adaptive Thresholding.
 The definition of 'ada' follows CLX14's approach for two-sample test.}
 
-\item{R}{a numeric value. The number of bootstrap statistics for 'Z'.}
+\item{R}{The number of bootstrap statistics for 'Z'.}
 
-\item{block}{a numeric value. A block size for blockwize multiplier
+\item{block}{A block size for blockwize multiplier
 bootstrap in the method 'Z'. The size should be smaller
 than min(n1, n2). The default value is 1.}
 

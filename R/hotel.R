@@ -4,17 +4,22 @@
 #' the same variables and the same order of the variables
 #'
 #'
-#' @param X1 a n1 by p data matrix. See Details.
-#' @param X2 a n2 by p data matrix.
+#' @param X1,X2 n1(,n2) by p data matrix. See Details.
 #' @param na.rm logical value of TRUE or FALSE.
 #'   option for calculating means of p varuables
 #' @param method method to be used. See 'Details'.
 #' @param C a constant to decide lambda_n for 'CLX', See Cai et al. (2011).
-#' @param omega a character value. the estimation of Omega matrix for 'CLX'.
+#' @param omegaHat A candidate estimate of Omega matrix for the two
+#'   maximum
+#'   type metods, 'CLX' and 'Z'. When the default 'omega' is used,
+#'   Omega will be estimated, See 'omegaHat' argument. Optionally,
+#'   'identity' can be choosen to set p by p Identity matrix as
+#'   the estimate of Omega matrix.
+#' @param omegaEst The estimation method for Omega matrix for 'CLX'.
 #'   'clime' for clime, 'ada' for Adaptive Thresholding.
 #'   The definition of 'ada' follows CLX14's approach for two-sample test.
-#' @param R a numeric value. The number of bootstrap statistics for 'Z'.
-#' @param block a numeric value. A block size for blockwize multiplier
+#' @param R The number of bootstrap statistics for 'Z'.
+#' @param block A block size for blockwize multiplier
 #'   bootstrap in the method 'Z'. The size should be smaller
 #'   than min(n1, n2). The default value is 1.
 #' @param alpha a numeric value. The type 1 error.
@@ -53,7 +58,8 @@
 #' @export
 hotelhd <- function(X1, X2, na.rm=TRUE,
                     method=c("H", "D", "BS", "CQ", "CLX", "Z"),
-                    C=10, omega=c("clime", "ada"), R=500,
+                    C=10, omegaHat=c("omega", "identity"),
+                    omegaEst=c("clime", "ada"), R=500,
                     block=1, alpha=0.05) {
   stopifnot(is.matrix(X1), is.matrix(X1))
 
@@ -72,19 +78,20 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
   meanDiff <- X1bar - X2bar
   S <- ((n1 - 1)*var(X1) + (n2 - 1)*var(X2)) / (n - 2)
 
-  omega <- match.arg(omega)
-  calcOmega <- function() {
+  omegaHat <- match.arg(omegaHat)
+  omegaEst <- match.arg(omegaEst)
+  calcOmegaEst <- function() {
     lambda <- C * (log(p)/n)
 
-    if (omega == "clime") {
+    if (omegaEst == "clime") {
       ## clime package
       clime(S, sigma=TRUE, lambda=lambda)$Omegalist[[1]]
 
       ## fastclime package
       #fc <- suppressMessages(fastclime(S))
-      #Omega <- fastclime.lambda(fc$lambdamtx, fc$icovlist, lambda)$icov
+      #OmegaHat <- fastclime.lambda(fc$lambdamtx, fc$icovlist, lambda)$icov
 
-    } else if (omega == "ada") {
+    } else if (omegaEst == "ada") {
       delta <- 2
       ss1 <- (sweep(X1, 2, X1bar))^2
       ss2 <- (sweep(X2, 2, X2bar))^2
@@ -100,14 +107,14 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
   method <- match.arg(method)
 
   if (method=="H") { # Hotelling's T2
-    Sinv <- chol2inv(chol(S))
+    Sinv <- solve(S)
     H <- as.vector(n1*n2/n * t(meanDiff) %*% Sinv %*% (meanDiff))
     F_H <- (n - p - 1)/(p * (n - 2)) * H
     pF_H <- pf(F_H, p, n-p-1, lower.tail=FALSE)
 
     list(statistic=F_H, pval=pF_H, df=c(df1=p, df2=n-p-1),
          nobs=c(n1=n1, n2=n2), nvar=p,
-         rejected= pF_H > alpha, method=method)
+         rejected= pF_H < alpha, method=method)
 
   } else if (method=="D") {
     X <- rbind(X1, X2)
@@ -160,7 +167,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     list(statistic=F_D, r=c(r1=r1, r2=r2),
          pval=c(pval1=pF1_D, pval2=pF2_D),
          nobs=c(n1=n1, n2=n2), nvar=p,
-         rejected=c(r1=pF1_D > alpha, r2=pF2_D > alpha), method=method)
+         rejected=c(r1=pF1_D < alpha, r2=pF2_D < alpha), method=method)
 
   } else if (method=="BS") {
     trS <- sum(diag(S))
@@ -171,7 +178,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
 
     list(statistics=Z_Mn, pval=pZ_Mn,
          nobs=c(n1=n1, n2=n2), nvar=p,
-         rejected=pZ_Mn > alpha, method=method)
+         rejected=pZ_Mn < alpha, method=method)
 
   } else if (method=="CQ") {
     prod11 <- tcrossprod(X1)
@@ -225,10 +232,11 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
 
     list(statistics=Z_Tn, pval=pZ_Tn,
          nobs=c(n1=n1, n2=n2), nvar=p,
-         rejected=pZ_Tn > alpha, method=method)
+         rejected=pZ_Tn < alpha, method=method)
 
   } else if (method=="CLX") {
-    Omega <- calcOmega()
+    if (omegaHat == "omega") Omega <- calcOmegaEst()
+    else Omega <- diag(nrow=p, ncol=p)
 
     Z <- Omega %*% (X1bar - X2bar)
     omega1 <- (n1-1)/n1 * var(X1 %*% Omega)
@@ -243,12 +251,15 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     #  M >= part1 - 2*log(log(1/(1-alpha)))
     #}
 
-    list(statistic=M, rejected=rejected)
+    list(statistic=M, nobs=c(n1=n1, n2=n2), nvar=p,
+         rejected=rejected, method=method)
 
+  ##--------------------------------------------------
   } else if (method == "Z") {
     if (block > min(n1, n2)) stop("The block size is greater than nobs.")
 
-    Omega <- calcOmega()
+    if (omegaHat == "omega") Omega <- calcOmegaEst()
+    else Omega <- diag(nrow=p, ncol=p)
 
     Z <- Omega %*% (X1bar - X2bar)
     XI1 <- X1 %*% Omega
@@ -273,23 +284,26 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
 
     T_boot <- sqnn * quantile(
         vapply(1:R, function(i) {
-          max((colMeans(sweep(XI1diff, 1, rep(rnorm(l1), each=block)[1:n1],
+          max(abs(
+              (colMeans(sweep(XI1diff, 1, rep(rnorm(l1), each=block)[1:n1],
                               FUN="*", check.margin=FALSE)) -
                colMeans(sweep(XI2diff, 1, rep(rnorm(l2), each=block)[1:n2],
-                              FUN="*", check.margin=FALSE))))},
+                              FUN="*", check.margin=FALSE)))))},
                FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE),
         1 - alpha, names=FALSE)
 
     Tt_boot <- sqnn * quantile(
         vapply(1:R, function(i) {
-          max((colMeans(sweep(XI1diff, 1, rep(rnorm(l1), each=block)[1:n1],
+          max(abs(
+              (colMeans(sweep(XI1diff, 1, rep(rnorm(l1), each=block)[1:n1],
                               FUN="*", check.margin=FALSE)) -
                colMeans(sweep(XI2diff, 1, rep(rnorm(l2), each=block)[1:n2],
-                              FUN="*", check.margin=FALSE)))/omega0sqrt)},
+                              FUN="*", check.margin=FALSE)))/omega0sqrt))},
                FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE),
         1 - alpha, names=FALSE)
 
     list(T=c(T=T, T_boot=T_boot), Tt=c(Tt=Tt, Tt_boot=Tt_boot),
-         rejected=c(T=T > T_boot, Tt=Tt > Tt_boot))
+         nobs=c(n1=n1, n2=n2), nvar=p,
+         rejected=c(T=T > T_boot, Tt=Tt > Tt_boot), method=method)
   }
 }
