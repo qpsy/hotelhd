@@ -18,6 +18,10 @@
 #' @param omegaEst The estimation method for Omega matrix for 'CLX'.
 #'   'clime' for clime, 'ada' for Adaptive Thresholding.
 #'   The definition of 'ada' follows CLX14's approach for two-sample test.
+#' @param omegaGiven If an omega was given, use it. This is an optional but
+#'   is included to improve speed of simulation study.
+#'   All the methods using 'clime' package will use the given omega,
+#'   so do not need to calculate individually.
 #' @param R The number of bootstrap statistics for 'Z'.
 #' @param block A block size for blockwize multiplier
 #'   bootstrap in the method 'Z'. The size should be smaller
@@ -59,8 +63,8 @@
 hotelhd <- function(X1, X2, na.rm=TRUE,
                     method=c("H", "D", "BS", "CQ", "CLX", "Z"),
                     C=10, omegaHat=c("omega", "identity"),
-                    omegaEst=c("clime", "ada"), R=500,
-                    block=1, alpha=0.05) {
+                    omegaEst=c("clime", "ada"), omegaGiven=NULL,
+                    R=500, block=1, alpha=0.05) {
   stopifnot(is.matrix(X1), is.matrix(X1))
 
   n1 <- NROW(X1)
@@ -235,8 +239,13 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
          rejected=pZ_Tn < alpha, method=method)
 
   } else if (method=="CLX") {
-    if (omegaHat == "omega") Omega <- calcOmegaEst()
-    else Omega <- diag(nrow=p, ncol=p)
+    if (is.null(omegaGiven)) {
+      if (omegaHat == "omega") Omega <- calcOmegaEst()
+      else Omega <- diag(nrow=p, ncol=p)
+
+    } else {
+      Omega <- omegaGiven
+    }
 
     Z <- Omega %*% (X1bar - X2bar)
     omega1 <- (n1-1)/n1 * var(X1 %*% Omega)
@@ -258,8 +267,13 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
   } else if (method == "Z") {
     if (block > min(n1, n2)) stop("The block size is greater than nobs.")
 
-    if (omegaHat == "omega") Omega <- calcOmegaEst()
-    else Omega <- diag(nrow=p, ncol=p)
+    if (is.null(omegaGiven)) {
+      if (omegaHat == "omega") Omega <- calcOmegaEst()
+      else Omega <- diag(nrow=p, ncol=p)
+
+    } else {
+      Omega <- omegaGiven
+    }
 
     Z <- Omega %*% (X1bar - X2bar)
     XI1 <- X1 %*% Omega
