@@ -50,6 +50,10 @@
 #'   A function 'rejected' for hypothesis test will be returned, which
 #'   needs an argument 'alpha' to test Whether the null is rejected or not.
 #'
+#' Method "Z" is blockwise bootstrap
+#'
+#' Method "M" is generalized bootstrap
+#'
 #'
 #' @references
 #' Dempster, A. P. (1958). A high dimensional two sample significance test. \emph{The Annals of Mathematical Statistics}, 995-1010.
@@ -61,7 +65,7 @@
 #'
 #' @export
 hotelhd <- function(X1, X2, na.rm=TRUE,
-                    method=c("H", "D", "BS", "CQ", "CLX", "Z"),
+                    method=c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
                     C=10, omegaHat=c("omega", "identity"),
                     omegaEst=c("clime", "ada"), omegaGiven=NULL,
                     R=500, block=1, alpha=0.05) {
@@ -319,5 +323,56 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     list(T=c(T=T, T_boot=T_boot), Tt=c(Tt=Tt, Tt_boot=Tt_boot),
          nobs=c(n1=n1, n2=n2), nvar=p,
          rejected=c(T=T > T_boot, Tt=Tt > Tt_boot), method=method)
+
+  } else if (method == "M") {
+    if (is.null(omegaGiven)) {
+      if (omegaHat == "omega") Omega <- calcOmegaEst()
+      else Omega <- diag(nrow=p, ncol=p)
+
+    } else {
+      Omega <- omegaGiven
+    }
+
+    ## \hat{Z}_{(b)}
+    X1b <- Omega %*% sweep(X1, 2, X1bar, check.margin=FALSE)
+    X2b <- Omega %*% sweep(X2, 2, X2bar, check.margin=FALSE)
+    omegaInv <- solve(Omega)
+    jk <- combn(p, 2) # column index
+    jkc <- NCOL(jk)
+
+    ## M statistic
+    calcM <- function(Zb) {
+      max(# M(Omega)
+          vapply(1:jkc, function(i) {
+            jk_i <- jk[, i]
+            Zb_jk <- Zb[jk_i]
+            omegaInv_jk <- omegaInv[jk_i, jk_i]
+            t(Zb_jk) %*% omegaInv_jk %*% Zb_jk
+          },
+          FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE))
+    }
+
+    ## test statistic
+    Zo <- Omega %*% (X1bar - X2bar)
+    M <- calcM(Zo)
+
+    ## constant related to n1, n2 are safely ommitted in calculation and comparison
+    M_boot <- quantile(
+        vapply(1:R, function(i) {# R of boot statistics
+          Zb <-
+            colMeans(
+                sweep(X1b, 1, rnorm(n1),
+                      FUN="*", check.margin=FALSE)) -
+            colMeans(
+                sweep(X2b, 1, rnorm(n2),
+                      FUN="*", check.margin=FALSE))
+          calcM(Zb)
+        },
+        FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE),
+        1 - alpha, names=FALSE)
+
+    list(M=(n1*n2/(n1+n2)) * M,
+         nobs=c(n1=n1, n2=n2), nvar=p,
+         rejected= M > M_boot, method=method)
   }
 }
