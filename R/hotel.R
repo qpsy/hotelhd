@@ -334,8 +334,8 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     }
 
     ## \hat{Z}_{(b)}
-    X1b <- Omega %*% sweep(X1, 2, X1bar, check.margin=FALSE)
-    X2b <- Omega %*% sweep(X2, 2, X2bar, check.margin=FALSE)
+    X1b <- sweep(X1, 2, X1bar, check.margin=FALSE) %*% Omega
+    X2b <- sweep(X2, 2, X2bar, check.margin=FALSE) %*% Omega
     omegaInv <- solve(Omega)
     jk <- combn(p, 2) # column index
     jkc <- NCOL(jk)
