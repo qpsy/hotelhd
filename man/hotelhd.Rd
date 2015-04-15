@@ -6,7 +6,8 @@
 \usage{
 hotelhd(X1, X2, na.rm = TRUE, method = c("H", "D", "BS", "CQ", "CLX", "Z",
   "M"), C = 10, omegaHat = c("omega", "identity"), omegaEst = c("clime",
-  "ada"), omegaGiven = NULL, R = 500, block = 1, alpha = 0.05)
+  "ada"), omegaGiven = NULL, subForM = c("sub", "diag"), R = 500,
+  block = 1, alpha = 0.05)
 }
 \arguments{
 \item{X1,X2}{n1(,n2) by p data matrix. See Details.}
@@ -33,6 +34,9 @@ The definition of 'ada' follows CLX14's approach for two-sample test.}
 is included to improve speed of simulation study.
 All the methods using 'clime' package will use the given omega,
 so do not need to calculate individually.}
+
+\item{subForM}{for the method 'M'. 'sub' extract sub-matrix from Omega.
+'diag' use diagonals of Omega (to improve efficiency)}
 
 \item{R}{The number of bootstrap statistics for 'Z'.}
 

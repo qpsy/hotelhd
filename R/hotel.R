@@ -22,6 +22,8 @@
 #'   is included to improve speed of simulation study.
 #'   All the methods using 'clime' package will use the given omega,
 #'   so do not need to calculate individually.
+#' @param subForM for the method 'M'. 'sub' extract sub-matrix from Omega.
+#'   'diag' use diagonals of Omega (to improve efficiency)
 #' @param R The number of bootstrap statistics for 'Z'.
 #' @param block A block size for blockwize multiplier
 #'   bootstrap in the method 'Z'. The size should be smaller
@@ -68,6 +70,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
                     method=c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
                     C=10, omegaHat=c("omega", "identity"),
                     omegaEst=c("clime", "ada"), omegaGiven=NULL,
+                    subForM=c("sub", "diag"),
                     R=500, block=1, alpha=0.05) {
   stopifnot(is.matrix(X1), is.matrix(X1))
 
@@ -124,6 +127,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
          nobs=c(n1=n1, n2=n2), nvar=p,
          rejected= pF_H < alpha, method=method)
 
+  ##---------------------------------------------------------
   } else if (method=="D") {
     X <- rbind(X1, X2)
     Htmp <- cbind(1/sqrt(n) * rep(1, n), # 1st row
@@ -177,6 +181,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
          nobs=c(n1=n1, n2=n2), nvar=p,
          rejected=c(r1=pF1_D < alpha, r2=pF2_D < alpha), method=method)
 
+  ##-------------------------------------------------------------
   } else if (method=="BS") {
     trS <- sum(diag(S))
     trS2 <- sum(diag(S %*% S))
@@ -188,6 +193,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
          nobs=c(n1=n1, n2=n2), nvar=p,
          rejected=pZ_Mn < alpha, method=method)
 
+  ##--------------------------------------------------
   } else if (method=="CQ") {
     prod11 <- tcrossprod(X1)
     prod22 <- tcrossprod(X2)
@@ -242,6 +248,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
          nobs=c(n1=n1, n2=n2), nvar=p,
          rejected=pZ_Tn < alpha, method=method)
 
+  ##--------------------------------------------------------
   } else if (method=="CLX") {
     if (is.null(omegaGiven)) {
       if (omegaHat == "omega") Omega <- calcOmegaEst()
@@ -324,6 +331,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
          nobs=c(n1=n1, n2=n2), nvar=p,
          rejected=c(T=T > T_boot, Tt=Tt > Tt_boot), method=method)
 
+  ##--------------------------------------------------------
   } else if (method == "M") {
     if (is.null(omegaGiven)) {
       if (omegaHat == "omega") Omega <- calcOmegaEst()
@@ -336,21 +344,31 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     ## \hat{Z}_{(b)}
     X1b <- sweep(X1, 2, X1bar, check.margin=FALSE) %*% Omega
     X2b <- sweep(X2, 2, X2bar, check.margin=FALSE) %*% Omega
-    omegaInv <- solve(Omega)
+    # omegaInv <- solve(Omega)
     jk <- combn(p, 2) # column index
     jkc <- NCOL(jk)
 
-    ## M statistic
-    calcM <- function(Zb) {
+    ## M statistic (omitted constant term)
+    calcM1 <- function(Z) {
       max(# M(Omega)
           vapply(1:jkc, function(i) {
             jk_i <- jk[, i]
-            Zb_jk <- Zb[jk_i]
-            omegaInv_jk <- omegaInv[jk_i, jk_i]
-            t(Zb_jk) %*% omegaInv_jk %*% Zb_jk
+            Z_jk <- Z[jk_i]
+            omegaInv_jk <- solve(Omega[jk_i, jk_i])
+            t(Z_jk) %*% omegaInv_jk %*% Z_jk
           },
           FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE))
     }
+
+    ## M statistic (omitted constant term)
+    ##  - efficient way of using off-diagonal of omegaInv_jk
+    calcM2 <- function(Z) {
+      sort(Z / diag(Omega), decreasing=TRUE)[c(1,2)]
+    }
+
+    subForM <- match.arg(subForM)
+    if (subForM == "sub") calcM <- calcM1
+    else calcM <- calcM2 # if (subForM == "diag")
 
     ## test statistic
     Zo <- Omega %*% (X1bar - X2bar)
