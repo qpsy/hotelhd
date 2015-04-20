@@ -363,7 +363,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     ## M statistic (omitted constant term)
     ##  - efficient way of using off-diagonal of omegaInv_jk
     calcM2 <- function(Z) {
-      sort(Z / diag(Omega), decreasing=TRUE)[c(1,2)]
+      sum(sort(Z / diag(Omega), decreasing=TRUE)[c(1,2)])
     }
 
     subForM <- match.arg(subForM)
