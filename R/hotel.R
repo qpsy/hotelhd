@@ -24,6 +24,8 @@
 #'   so do not need to calculate individually.
 #' @param subForM for the method 'M'. 'sub' extract sub-matrix from Omega.
 #'   'diag' use diagonals of Omega (to improve efficiency)
+#' @param ndim The number of dimensions for generalized maximum type statistic.
+#'   Default value is 4.
 #' @param R The number of bootstrap statistics for 'Z'.
 #' @param block A block size for blockwize multiplier
 #'   bootstrap in the method 'Z'. The size should be smaller
@@ -70,7 +72,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
                     method=c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
                     C=10, omegaHat=c("omega", "identity"),
                     omegaEst=c("clime", "ada"), omegaGiven=NULL,
-                    subForM=c("sub", "diag"),
+                    subForM=c("sub", "diag"), ndim=4,
                     R=500, block=1, alpha=0.05) {
   stopifnot(is.matrix(X1), is.matrix(X1))
 
@@ -345,7 +347,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     X1b <- sweep(X1, 2, X1bar, check.margin=FALSE) %*% Omega
     X2b <- sweep(X2, 2, X2bar, check.margin=FALSE) %*% Omega
     # omegaInv <- solve(Omega)
-    jk <- combn(p, 2) # column index
+    jk <- combn(p, ndim) # column index
     jkc <- NCOL(jk)
 
     ## M statistic (omitted constant term)
@@ -363,7 +365,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     ## M statistic (omitted constant term)
     ##  - efficient way of using off-diagonal of omegaInv_jk
     calcM2 <- function(Z) {
-      sum(sort(Z / diag(Omega), decreasing=TRUE)[c(1,2)])
+      sum(sort(Z / diag(Omega), decreasing=TRUE)[c(1:ndim)])
     }
 
     subForM <- match.arg(subForM)
