@@ -9,3 +9,7 @@ caltrSigma12C <- function(X1_in, X2_in, n1, n2, p) {
     .Call('hotelhd_caltrSigma12C', PACKAGE = 'hotelhd', X1_in, X2_in, n1, n2, p)
 }
 
+calcM2 <- function(Z, Omega, ndim) {
+    .Call('hotelhd_calcM2', PACKAGE = 'hotelhd', Z, Omega, ndim)
+}
+

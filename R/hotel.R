@@ -351,7 +351,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     jkc <- NCOL(jk)
 
     ## M statistic (omitted constant term)
-    calcM1 <- function(Z) {
+    calcM1 <- function(Z, Omega, ndim) {
       max(# M(Omega)
           vapply(1:jkc, function(i) {
             jk_i <- jk[, i]
@@ -364,9 +364,10 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
 
     ## M statistic (omitted constant term)
     ##  - efficient way of using diagonal of omegaInv_jk
-    calcM2 <- function(Z) {
-      sum(sort(Z / diag(Omega), decreasing=TRUE)[c(1:ndim)])
-    }
+    ## !! replaced by Rcpp !!
+    ##calcM2 <- function(Z) {
+    ##  sum(sort(Z / diag(Omega), decreasing=TRUE)[c(1:ndim)])
+    ##}
 
     subForM <- match.arg(subForM)
     if (subForM == "sub") calcM <- calcM1
@@ -374,7 +375,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
 
     ## test statistic
     Zo <- Omega %*% (X1bar - X2bar)
-    M <- calcM(Zo)
+    M <- calcM(Zo, Omega, ndim)
 
     ## constant related to n1, n2 are safely ommitted in calculation and comparison
     M_boot <- quantile(
@@ -386,7 +387,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
             colMeans(
                 sweep(X2b, 1, rnorm(n2),
                       FUN="*", check.margin=FALSE))
-          calcM(Zb)
+          calcM(Zb, Omega, ndim)
         },
         FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE),
         1 - alpha, names=FALSE)

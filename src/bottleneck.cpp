@@ -72,3 +72,10 @@ double caltrSigma12C(NumericMatrix X1_in, NumericMatrix X2_in,
 	double trSigma12 =  trace(Sigma12) / (n1*n2);
 	return trSigma12;
 }
+
+// [[Rcpp::export]]
+double calcM2(NumericVector Z, NumericMatrix Omega, int ndim) {
+  NumericVector M = Z*Z / diag(Omega);
+  std::sort(M.begin(), M.end(), std::greater<int>());
+  return sum(M[seq(0, ndim-1)]);
+}
