@@ -344,8 +344,8 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     }
 
     ## \hat{Z}_{(b)}
-    X1b <- sweep(X1, 2, X1bar, check.margin=FALSE) %*% Omega
-    X2b <- sweep(X2, 2, X2bar, check.margin=FALSE) %*% Omega
+    #X1b <- sweep(X1, 2, X1bar, check.margin=FALSE) %*% Omega
+    #X2b <- sweep(X2, 2, X2bar, check.margin=FALSE) %*% Omega
     # omegaInv <- solve(Omega)
     jk <- combn(p, ndim) # column index
     jkc <- NCOL(jk)
@@ -371,22 +371,39 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
 
     subForM <- match.arg(subForM)
     if (subForM == "sub") calcM <- calcM1
-    else calcM <- calcM2C # if (subForM == "diag")
+    else calcM <- calcM2 # if (subForM == "diag")
 
     ## test statistic
     Zo <- Omega %*% (X1bar - X2bar)
     M <- calcM(Zo, Omega, ndim)
 
     ## constant related to n1, n2 are safely ommitted in calculation and comparison
+    ## M_boot <- quantile(
+    ##     vapply(1:R, function(i) {# R of boot statistics
+    ##       Zb <-
+    ##         colMeans(
+    ##             sweep(X1b, 1, rnorm(n1),
+    ##                   FUN="*", check.margin=FALSE)) -
+    ##         colMeans(
+    ##             sweep(X2b, 1, rnorm(n2),
+    ##                   FUN="*", check.margin=FALSE))
+    ##       calcM(Zb, Omega, ndim)
+    ##     },
+    ##     FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE),
+    ##     1 - alpha, names=FALSE)
+
     M_boot <- quantile(
         vapply(1:R, function(i) {# R of boot statistics
-          Zb <-
+          Zbar <-
             colMeans(
-                sweep(X1b, 1, rnorm(n1),
-                      FUN="*", check.margin=FALSE)) -
+                sweep(
+                    sweep(X1, 2, X1bar, FUN="-", check.margin=FALSE),#deviation
+                    1, rnorm(n1), FUN="*", check.margin=FALSE)) -
             colMeans(
-                sweep(X2b, 1, rnorm(n2),
-                      FUN="*", check.margin=FALSE))
+                sweep(
+                    sweep(X2, 2, X1bar, FUN="-", check.margin=FALSE),
+                    1, rnorm(n1), FUN="*", check.margin=FALSE))
+          Zb <- Omega %*% Zbar
           calcM(Zb, Omega, ndim)
         },
         FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE),
