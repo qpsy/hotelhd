@@ -364,10 +364,10 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
 
     ## M statistic (omitted constant term)
     ##  - efficient way of using diagonal of omegaInv_jk
-    ## !! replaced by Rcpp !!
-    ##calcM2 <- function(Z) {
-    ##  sum(sort(Z / diag(Omega), decreasing=TRUE)[c(1:ndim)])
-    ##}
+    ## !! replaced by Rcpp !! calcM2C
+    calcM2 <- function(Z) {
+      sum(sort(Z*Z / diag(Omega), decreasing=TRUE)[c(1:ndim)])
+    }
 
     subForM <- match.arg(subForM)
     if (subForM == "sub") calcM <- calcM1

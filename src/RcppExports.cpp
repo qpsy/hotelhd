@@ -34,16 +34,16 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
-// calcM2
-double calcM2(NumericVector Z, NumericMatrix Omega, int ndim);
-RcppExport SEXP hotelhd_calcM2(SEXP ZSEXP, SEXP OmegaSEXP, SEXP ndimSEXP) {
+// calcM2C
+double calcM2C(NumericVector Z, NumericMatrix Omega, int ndim);
+RcppExport SEXP hotelhd_calcM2C(SEXP ZSEXP, SEXP OmegaSEXP, SEXP ndimSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< NumericVector >::type Z(ZSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type Omega(OmegaSEXP);
     Rcpp::traits::input_parameter< int >::type ndim(ndimSEXP);
-    __result = Rcpp::wrap(calcM2(Z, Omega, ndim));
+    __result = Rcpp::wrap(calcM2C(Z, Omega, ndim));
     return __result;
 END_RCPP
 }
