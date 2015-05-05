@@ -377,7 +377,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     Zo <- Omega %*% (X1bar - X2bar)
     M <- calcM(Zo, Omega, ndim)
 
-    constant related to n1, n2 are safely ommitted in calculation and comparison
+    ## constant related to n1, n2 are safely ommitted in calculation and comparison
     M_boot <- quantile(
         vapply(1:R, function(i) {# R of boot statistics
           Zb <-
