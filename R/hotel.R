@@ -26,6 +26,7 @@
 #'   'diag' use diagonals of Omega (to improve efficiency)
 #' @param ndim The number of dimensions for generalized maximum type statistic.
 #'   Default value is 4.
+#' @param CLXomega  test M method, by using CLX's omega, i.e., 'Omega * Sigma * Omega'
 #' @param R The number of bootstrap statistics for 'Z'.
 #' @param block A block size for blockwize multiplier
 #'   bootstrap in the method 'Z'. The size should be smaller
@@ -73,6 +74,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
                     C=10, omegaHat=c("omega", "identity"),
                     omegaEst=c("clime", "ada"), omegaGiven=NULL,
                     subForM=c("sub", "diag"), ndim=4,
+                    CLXomega=FALSE,
                     R=500, block=1, alpha=0.05) {
   stopifnot(is.matrix(X1), is.matrix(X1))
 
@@ -343,6 +345,8 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
       Omega <- omegaGiven
     }
 
+    Omega <- if (CLXomega==FALSE) Omega else Omega %*% S %*% Omega
+
     ## \hat{Z}_{(b)}
     X1b <- sweep(X1, 2, X1bar, check.margin=FALSE) %*% Omega
     X2b <- sweep(X2, 2, X2bar, check.margin=FALSE) %*% Omega
@@ -375,7 +379,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
 
     ## test statistic
     Zo <- Omega %*% (X1bar - X2bar)
-    M <- calcM(Zo, Omega, ndim)
+    M <- if calcM(Zo, Omega, ndim)
 
     ## constant related to n1, n2 are safely ommitted in calculation and comparison
     M_boot <- quantile(
