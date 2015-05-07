@@ -375,7 +375,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
 
     subForM <- match.arg(subForM)
     if (subForM == "sub") calcM <- calcM1
-    else calcM <- calcM2C # if (subForM == "diag")
+    else calcM <- calcM2 # if (subForM == "diag")
 
     ## test statistic
     Zo <- Omega %*% (X1bar - X2bar)
