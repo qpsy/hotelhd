@@ -345,7 +345,12 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
       Omega <- omegaGiven
     }
 
-    Omega <- if (CLXomega==FALSE) Omega else Omega %*% S %*% Omega
+    Omega <- if (CLXomega==FALSE) Omega
+             else {
+               omega1 <- (n1-1)/n1 * var(X1 %*% Omega)
+               omega2 <- (n2-1)/n2 * var(X2 %*% Omega)
+               Omega <- n1/n * omega1 + n2/n * omega2
+             }
 
     ## \hat{Z}_{(b)}
     X1b <- sweep(X1, 2, X1bar, check.margin=FALSE) %*% Omega
