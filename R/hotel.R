@@ -384,7 +384,7 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
 
     ## test statistic
     Zo <- Omega %*% (X1bar - X2bar)
-    M <- if calcM(Zo, Omega, ndim)
+    M <- calcM(Zo, Omega, ndim)
 
     ## constant related to n1, n2 are safely ommitted in calculation and comparison
     M_boot <- quantile(
