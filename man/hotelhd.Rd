@@ -7,7 +7,7 @@
 hotelhd(X1, X2, na.rm = TRUE, method = c("H", "D", "BS", "CQ", "CLX", "Z",
   "M"), C = 10, omegaHat = c("omega", "identity"), omegaEst = c("clime",
   "ada"), omegaGiven = NULL, subForM = c("sub", "diag"), ndim = 4,
-  R = 500, block = 1, alpha = 0.05)
+  CLXomega = FALSE, R = 500, block = 1, alpha = 0.05)
 }
 \arguments{
 \item{X1,X2}{n1(,n2) by p data matrix. See Details.}
@@ -40,6 +40,8 @@ so do not need to calculate individually.}
 
 \item{ndim}{The number of dimensions for generalized maximum type statistic.
 Default value is 4.}
+
+\item{CLXomega}{test M method, by using CLX's omega, i.e., 'Omega * Sigma * Omega'}
 
 \item{R}{The number of bootstrap statistics for 'Z'.}
 

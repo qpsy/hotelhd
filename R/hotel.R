@@ -374,8 +374,13 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     ## M statistic (omitted constant term)
     ##  - efficient way of using diagonal of omegaInv_jk
     ## !! replaced by Rcpp !! calcM2C
+    ## calcM2 <- function(Z, Omega, ndim) {
+    ##   sum(sort(Z*Z / diag(Omega), decreasing=TRUE)[c(1:ndim)])
+    ## }
+
+    ## calculate 1 ~ ndim M at once
     calcM2 <- function(Z, Omega, ndim) {
-      sum(sort(Z*Z / diag(Omega), decreasing=TRUE)[c(1:ndim)])
+      cumsum(sort(Z*Z / diag(Omega), decreasing=TRUE)[c(1:ndim)])
     }
 
     subForM <- match.arg(subForM)
@@ -387,7 +392,21 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     M <- calcM(Zo, Omega, ndim)
 
     ## constant related to n1, n2 are safely ommitted in calculation and comparison
-    M_boot <- quantile(
+    ## M_boot <- quantile(
+    ##     vapply(1:R, function(i) {# R of boot statistics
+    ##       Zb <-
+    ##         colMeans(
+    ##             sweep(X1b, 1, rnorm(n1),
+    ##                   FUN="*", check.margin=FALSE)) -
+    ##         colMeans(
+    ##             sweep(X2b, 1, rnorm(n2),
+    ##                   FUN="*", check.margin=FALSE))
+    ##       calcM(Zb, Omega, ndim)
+    ##     },
+    ##     FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE),
+    ##     1 - alpha, names=FALSE)
+
+    M_boot <- apply(
         vapply(1:R, function(i) {# R of boot statistics
           Zb <-
             colMeans(
@@ -398,25 +417,8 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
                       FUN="*", check.margin=FALSE))
           calcM(Zb, Omega, ndim)
         },
-        FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE),
-        1 - alpha, names=FALSE)
-
-    ## M_boot <- quantile(
-    ##     vapply(1:R, function(i) {# R of boot statistics
-    ##       Zbar <-
-    ##         colMeans(
-    ##             sweep(
-    ##                 sweep(X1, 2, X1bar, FUN="-", check.margin=FALSE),#deviation
-    ##                 1, rnorm(n1), FUN="*", check.margin=FALSE)) -
-    ##         colMeans(
-    ##             sweep(
-    ##                 sweep(X2, 2, X1bar, FUN="-", check.margin=FALSE),
-    ##                 1, rnorm(n1), FUN="*", check.margin=FALSE))
-    ##       Zb <- Omega %*% Zbar
-    ##       calcM(Zb, Omega, ndim)
-    ##     },
-    ##     FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE),
-    ##     1 - alpha, names=FALSE)
+        FUN.VALUE=vector("numeric", ndim), USE.NAMES=FALSE),
+        1, function(rr) quantile(rr, 1 - alpha, names=FALSE))
 
     list(M=(n1*n2/(n1+n2)) * M,
          nobs=c(n1=n1, n2=n2), nvar=p,
