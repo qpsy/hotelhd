@@ -356,19 +356,20 @@ hotelhd <- function(X1, X2, na.rm=TRUE,
     X1b <- sweep(X1, 2, X1bar, check.margin=FALSE) %*% Omega
     X2b <- sweep(X2, 2, X2bar, check.margin=FALSE) %*% Omega
 
-    jk <- combn(p, ndim) # column index
-    jkc <- NCOL(jk)
+    ## temporally commented out for simulation
+    #jk <- combn(p, ndim) # column index
+    #jkc <- NCOL(jk)
 
     ## M statistic (omitted constant term)
     calcM1 <- function(Z, Omega, ndim) {
-      max(# M(Omega)
-          vapply(1:jkc, function(i) {
-            jk_i <- jk[, i]
-            Z_jk <- Z[jk_i]
-            omegaInv_jk <- solve(Omega[jk_i, jk_i])
-            t(Z_jk) %*% omegaInv_jk %*% Z_jk
-          },
-          FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE))
+      ## max(# M(Omega)
+      ##     vapply(1:jkc, function(i) {
+      ##       jk_i <- jk[, i]
+      ##       Z_jk <- Z[jk_i]
+      ##       omegaInv_jk <- solve(Omega[jk_i, jk_i])
+      ##       t(Z_jk) %*% omegaInv_jk %*% Z_jk
+      ##     },
+      ##     FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE))
     }
 
     ## M statistic (omitted constant term)
