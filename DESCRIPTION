@@ -1,8 +1,9 @@
 Package: hotelhd
 Title: High dimensional Hotelling's T2 test
 Version: 0.1
-Authors@R: person("Dongjun", "You", email = "djyu1210@gmail.com",
-    role = c("aut", "cre"))
+Authors@R: c(
+    person("Dongjun", "You", email = "djyu1210@gmail.com", role = c("aut", "cre")),
+		person("Xianyang", "Zhang", email = "zhangxiany@missouri.edu", role=c("aut")))
 Description: Multivariate two sample mean difference test.
 Depends:
     R (>= 3.1.1)
@@ -12,4 +13,6 @@ Imports:
     nleqslv,
     clime,
     Rcpp
-LinkingTo: Rcpp, RcppArmadillo
+LinkingTo:
+    Rcpp,
+    RcppArmadillo
