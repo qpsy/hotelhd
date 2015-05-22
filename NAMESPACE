@@ -3,6 +3,7 @@
 export(adacov)
 export(diag2)
 export(hotelhd)
+export(hotelhd_control)
 import(Rcpp)
 import(clime)
 importFrom(nleqslv,nleqslv)
