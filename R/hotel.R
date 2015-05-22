@@ -1,4 +1,4 @@
-#' Hotelling's Test with High Dimensional Data
+#' Two Sample Inference for High Dimensional Mean
 #'
 #' Users should take care to ensure that the two dataset have
 #' the same variables and the same order of the variables
