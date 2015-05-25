@@ -45,11 +45,12 @@ Test results.
 }
 }
 \references{
-\itemize{
-\item Bai, Zhidong D and Saranadasa, Hewa. (1996). Effect of high dimension: by an example of a two sample problem. \emph{Statistica Sinica}, 311-329.
-\item Cai, T. Tony and Liu, Weidong and Xia, Yin. (2014). Two-sample test of high dimensional means under dependence. \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 349-372.
-\item Chen, Song Xi and Qin, Ying-Li. (2010). A two-sample test for high-dimensional data with applications to gene-set testing. \emph{Annals of Statistics}, 808-835.
-\item Dempster, A. P. (1958). A high dimensional two sample significance test. \emph{The Annals of Mathematical Statistics}, 995-1010.
-}
+Bai, Zhidong D and Saranadasa, Hewa. (1996). Effect of high dimension: by an example of a two sample problem. \emph{Statistica Sinica}, 6(2), 311-329.
+
+  Cai, T. Tony and Liu, Weidong and Xia, Yin. (2014). Two-sample test of high dimensional means under dependence. \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 76(2), 349-372.
+
+  Chen, Song Xi and Qin, Ying-Li. (2010). A two-sample test for high-dimensional data with applications to gene-set testing. \emph{Annals of Statistics}, 38(2), 808-835.
+
+  Dempster, A. P. (1958). A high dimensional two sample significance test. \emph{The Annals of Mathematical Statistics}, 995-1010.
 }
 
