@@ -9,47 +9,47 @@ hotelhd(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
 }
 \arguments{
 \item{X1,X2}{matrix. n1(,n2) by p data matrix. Missing values (including NaN) will
-be omitted from the calculations.}
+be omitted from the calculations.
+Data 'X1' and 'X2' only accept matrix as arguments to prevent confusion.
+All the methods
+implemented in this package assume continuous variables as inputs.}
 
 \item{method}{character. The method to be used.
 See 'Details'.}
 
-\item{alpha}{a numeric value. The type 1 error.}
+\item{alpha}{numeric. The type 1 error.}
 
-\item{control}{a list with control parameters as returned by \code{hotelhd_ontrol}.}
+\item{control}{list. Control parameters returned by \code{hotelhd_control}.
+  Users NEED to check the function \code{\link{hotelhd_control}} when applying
+  maximum type tests (i.e., "CLX", "Z", "M").}
 }
 \value{
-Test results
+Test results.
 }
 \description{
 \code{hotelhd} is used to test two sample inference problem for high dimensional
   data.
 }
 \details{
-Data 'X1' and 'X2' only accept matrix as arguments. All the methods
-implemented in this package assume continuous variables as inputs.
-
-Method "H" is for Hotelling's T2 test.
-
-Method "D" is for Dempster's (1958) non-exact test.
-
-Method "BS" is
-
-Method "CQ" is
-
-Method "CLX" is using CLIME to estimate Omega. The current version
-  uses the default options of 'fastclime' function of
-  'fastclime' package.
-  Whether the null is rejected or not is only included in the result,
-  because of the form of asymptotic distribution of the test statistics.
-  A function 'rejected' for hypothesis test will be returned, which
-  needs an argument 'alpha' to test Whether the null is rejected or not.
-
-Method "Z" is blockwise bootstrap
-
-Method "M" is generalized bootstrap
+\describe{
+  \item{H}{Hotelling's T-squared test.
+    Implemented for convenient comparisons with other methods.
+    Users can find more sophisticated implementation of
+    Hotelling's T-squared test in CRAN.}
+  \item{D}{Dempster's (1958) non-exact test.}
+  \item{BS}{Bai and Saranadasa's (1996) test.}
+  \item{CQ}{Chen and Qin's (2010) test.}
+  \item{CLX}{Cai, Liu and Xia's (2014) test.}
+  \item{Z}{blockwise bootstrap}
+  \item{M}{generalized bootstrap}
+}
 }
 \references{
-Dempster, A. P. (1958). A high dimensional two sample significance test. \emph{The Annals of Mathematical Statistics}, 995-1010.
+\itemize{
+\item Bai, Zhidong D and Saranadasa, Hewa. (1996). Effect of high dimension: by an example of a two sample problem. \emph{Statistica Sinica}, 311-329.
+\item Cai, T. Tony and Liu, Weidong and Xia, Yin. (2014). Two-sample test of high dimensional means under dependence. \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 349-372.
+\item Chen, Song Xi and Qin, Ying-Li. (2010). A two-sample test for high-dimensional data with applications to gene-set testing. \emph{Annals of Statistics}, 808-835.
+\item Dempster, A. P. (1958). A high dimensional two sample significance test. \emph{The Annals of Mathematical Statistics}, 995-1010.
+}
 }
 
