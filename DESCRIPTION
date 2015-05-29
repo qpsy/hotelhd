@@ -5,14 +5,15 @@ Authors@R: c(
     person("Dongjun", "You", email = "djyu1210@gmail.com", role = c("aut", "cre")),
 		person("Xianyang", "Zhang", email = "zhangxiany@missouri.edu", role=c("aut")))
 Description: Multivariate two sample mean difference test.
-Depends:
+Depends: 
     R (>= 3.1.1)
 License: GPL-2 | GPL-3
 LazyData: true
-Imports:
+Imports: 
     nleqslv,
     clime,
     Rcpp
-LinkingTo:
+LinkingTo: 
     Rcpp,
     RcppArmadillo
+Suggests: testthat
