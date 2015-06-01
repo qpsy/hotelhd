@@ -14,6 +14,9 @@
 #' @param control list. Control parameters returned by \code{hotelhd_control}.
 #'   Users NEED to check the function \code{\link{hotelhd_control}} when applying
 #'   maximum type tests (i.e., "CLX", "Z", "M").
+#' @param ... additional arguments to be passed to \code{flare::sugm}.
+#'   The function "sugm" estimates Gaussian precision matrix in high dimensions.
+#'   Currently, 'clime' is applied. See the help of \code{flare::sugm}.
 #'
 #' @return Test results.
 #'
@@ -27,8 +30,10 @@
 #'   \item{BS}{Bai and Saranadasa's (1996) test.}
 #'   \item{CQ}{Chen and Qin's (2010) test.}
 #'   \item{CLX}{Cai, Liu and Xia's (2014) test.}
-#'   \item{Z}{blockwise bootstrap}
-#'   \item{M}{generalized bootstrap}
+#'   \item{Z}{blockwise bootstrap. A new method considering time series.
+#'     The paper for this method is under review.}
+#'   \item{M}{generalized bootstrap. A new method combining sum-of-square and maximum type.
+#'     The paper for this method is under review.}
 #' }
 #'
 #' @references
@@ -41,13 +46,13 @@
 #'   Dempster, A. P. (1958). A high dimensional two sample significance test. \emph{The Annals of Mathematical Statistics}, 995-1010.
 #'
 #' @importFrom nleqslv nleqslv
-#' @import clime
+#' @importFrom flare sugm
 #' @import Rcpp
 #' @useDynLib hotelhd
 #'
 #' @export
-hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
-                    alpha = 0.05, control = hotelhd_control(method = method))
+hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),alpha = 0.05,
+                    control = hotelhd_control(method = method), ...)
 {
   stopifnot(is.matrix(X1), is.matrix(X1))
 
@@ -74,33 +79,33 @@ hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
     C <- control$C
     omegaGiven <- control$omegaGiven
 
-    calcOmegaEst <- function() {
-      lambda <- C * (log(p)/n)
-
-      if (omegaEst == "clime") {
-        ## clime package
-        clime(S, sigma=TRUE, lambda=lambda)$Omegalist[[1]]
-
-        ## fastclime package
-        #fc <- suppressMessages(fastclime(S))
-        #OmegaHat <- fastclime.lambda(fc$lambdamtx, fc$icovlist, lambda)$icov
-
-      } else if (omegaEst == "ada") {
-        delta <- 2
-        ss1 <- (sweep(X1, 2, X1bar))^2
-        ss2 <- (sweep(X2, 2, X2bar))^2
-        theta <- (t(ss1) %*% ss1 + (2-n1)*(var(X1))^2 +
-                    t(ss2) %*% ss2 + (2-n2)*(var(X2))^2) / n
-
-        lambda <- delta * sqrt(log(p)*theta / n)
-        Sstar <- S * (abs(S) >= lambda)
-        solve(Sstar)
-      }
-    }
+#     calcOmega <- function() {
+#       lambda <- C * (log(p)/n)
+#
+#       if (omegaEst == "clime") {
+#         ## clime package
+#         clime(S, sigma=TRUE, lambda=lambda)$Omegalist[[1]]
+#
+#         ## fastclime package
+#         #fc <- suppressMessages(fastclime(S))
+#         #OmegaHat <- fastclime.lambda(fc$lambdamtx, fc$icovlist, lambda)$icov
+#
+#       } else if (omegaEst == "ada") {
+#         delta <- 2
+#         ss1 <- (sweep(X1, 2, X1bar))^2
+#         ss2 <- (sweep(X2, 2, X2bar))^2
+#         theta <- (t(ss1) %*% ss1 + (2-n1)*(var(X1))^2 +
+#                     t(ss2) %*% ss2 + (2-n2)*(var(X2))^2) / n
+#
+#         lambda <- delta * sqrt(log(p)*theta / n)
+#         Sstar <- S * (abs(S) >= lambda)
+#         solve(Sstar)
+#       }
+#     }
 
     if (method=="CLX") {
       if (is.null(omegaGiven)) {
-        if (omegaHat == "omega") Omega <- calcOmegaEst()
+        if (omegaHat == "omega") Omega <- calcOmega(...)
         else Omega <- diag(nrow=p, ncol=p)
 
       } else {
@@ -131,7 +136,7 @@ hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
       if (block > min(n1, n2)) stop("The block size is greater than nobs.")
 
       if (is.null(omegaGiven)) {
-        if (omegaHat == "omega") Omega <- calcOmegaEst()
+        if (omegaHat == "omega") Omega <- calcOmega(...)
         else Omega <- diag(nrow=p, ncol=p)
 
       } else {
@@ -190,7 +195,7 @@ hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
       ndim <- control$ndim
 
       if (is.null(omegaGiven)) {
-        if (omegaHat == "omega") Omega <- calcOmegaEst()
+        if (omegaHat == "omega") Omega <- calcOmega(...)
         else Omega <- diag(nrow=p, ncol=p)
 
       } else {

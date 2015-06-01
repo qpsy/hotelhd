@@ -5,7 +5,7 @@
 \title{Two Sample Inference for High Dimensional Mean}
 \usage{
 hotelhd(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
-  alpha = 0.05, control = hotelhd_control(method = method))
+  alpha = 0.05, control = hotelhd_control(method = method), ...)
 }
 \arguments{
 \item{X1,X2}{matrix. n1(,n2) by p data matrix. Missing values (including NaN) will
@@ -20,8 +20,12 @@ See 'Details'.}
 \item{alpha}{numeric. The type 1 error.}
 
 \item{control}{list. Control parameters returned by \code{hotelhd_control}.
-  Users NEED to check the function \code{\link{hotelhd_control}} when applying
-  maximum type tests (i.e., "CLX", "Z", "M").}
+Users NEED to check the function \code{\link{hotelhd_control}} when applying
+maximum type tests (i.e., "CLX", "Z", "M").}
+
+\item{...}{additional arguments to be passed to \code{flare::sugm}.
+  The function "sugm" estimates Gaussian precision matrix in high dimensions.
+  Currently, 'clime' is applied. See the help of \code{flare::sugm}.}
 }
 \value{
 Test results.
@@ -40,8 +44,10 @@ Test results.
   \item{BS}{Bai and Saranadasa's (1996) test.}
   \item{CQ}{Chen and Qin's (2010) test.}
   \item{CLX}{Cai, Liu and Xia's (2014) test.}
-  \item{Z}{blockwise bootstrap}
-  \item{M}{generalized bootstrap}
+  \item{Z}{blockwise bootstrap. A new method considering time series.
+    The paper for this method is under review.}
+  \item{M}{generalized bootstrap. A new method combining sum-of-square and maximum type.
+    The paper for this method is under review.}
 }
 }
 \references{
