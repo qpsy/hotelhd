@@ -103,6 +103,45 @@ hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),al
 #       }
 #     }
 
+## calculation of Omega hat
+## if it is useful, export it later.
+calcOmega <- function(...)
+{
+  extraArgs <- list(...)
+
+  if (length(extraArgs)) {
+    namesExtraArgs <- names(extraArgs)
+    sugmArgs <- names(formals(sugm)) #legal arg names
+    indx <- match(namesExtraArgs, sugmArgs, nomatch=0L)
+
+    if (any(indx==0L)) {
+      stop(gettextf("Argument %s not matched.", namesExtraArgs[indx==0L]),
+           domain = NA)
+    } else if (("method" %in% namesExtraArgs) &&
+                 extraArgs[["method"]] != "clime") {
+      stop("Currently, only clime can be used.", domain = NA)
+    } else if ("data" %in% namesExtraArgs) {
+      stop("Currently, internally caculated data is used.", domain = NA)
+    }
+
+    if ("nlambda" %in% namesExtraArgs) {
+      omegaList <- sugm(S, method = "clime", ...)$icov
+    } else {
+      omegaList <- sugm(S, nlambda=50, method = "clime", ...)$icov
+    }
+
+    # default: where no additional arguments for 'sugm'
+  } else {
+    omegaList <- sugm(S, nlambda=50, method="clime")$icov
+  }
+
+  dif <- vapply(omegaList,
+                function(O) sum(diag(S%*%O))-log(det(O)),
+                FUN.VALUE=vector("numeric", 1L))
+
+  omegaList[[which.min(dif)]]
+}
+
     if (method=="CLX") {
       if (is.null(omegaGiven)) {
         if (omegaHat == "omega") Omega <- calcOmega(...)
