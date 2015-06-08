@@ -47,7 +47,7 @@
 #'
 #' @importFrom nleqslv nleqslv
 #' @importFrom flare sugm
-#' @import Rcpp sourceCpp
+#' @importFrom Rcpp sourceCpp
 #' @useDynLib hotelhd
 #'
 #' @export
