@@ -52,7 +52,7 @@
 #'
 #' @export
 hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),alpha = 0.05,
-                    control = hotelhd_control(method = method), ...)
+                    control = hotelhd_control(), ...)
 {
   stopifnot(is.matrix(X1), is.matrix(X1))
 
