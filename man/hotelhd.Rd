@@ -5,7 +5,7 @@
 \title{Two Sample Inference for High Dimensional Mean}
 \usage{
 hotelhd(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
-  alpha = 0.05, control = hotelhd_control(method = method), ...)
+  alpha = 0.05, control = hotelhd_control(), ...)
 }
 \arguments{
 \item{X1,X2}{matrix. n1(,n2) by p data matrix. Missing values (including NaN) will
