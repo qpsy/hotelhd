@@ -3,8 +3,6 @@
 #' Various parameters that control setting of tests. Currently,
 #' the maximum type tests (i.e., 'CLX', 'Z', 'M') only need control parameters.
 #'
-#' @param C numeric. to decide lambda_n for 'CLX', See Cai et al. (2011).
-#'
 #' @param omegaGiven \code{NULL} or \eqn{p} by \eqn{p} matrix.
 #'   When the default \code{NULL} is chosen, \eqn{\Omega} matrix is estimated;
 #'   see \code{omegaHat} and \code{omegaEst} parameters.
@@ -18,6 +16,7 @@
 #'   Optionally,
 #'   'identity' can be choosen to set \eqn{p} by \eqn{p} Identity matrix as
 #'   an estimate of \eqn{\Omega} matrix.
+#'   When the data is not high-dimensional, inverse of sample covariance is offered.
 #'
 #' @param omegaEst character; 'clime'.
 #'   The estimation method for \eqn{\Omega} matrix.
@@ -39,32 +38,16 @@
 #'   than min(n1, n2). The default value is 1.
 #'
 #' @export
-hotelhd_control <- function(C=10, omegaGiven=NULL,
+hotelhd_control <- function(omegaGiven=NULL,
                             omegaHat=c("omega", "identity"),
                             omegaEst=c("clime"),
-                            subForM=c("diag", "sub"), ndim=4L,
+                            ndim=4L, sub=c("diag", "sub"),
                             B=500L, block=1L)
 {
-  #method <- match.arg(method)
+  omegaHat <- match.arg(omegaHat)
+  omegaEst <- match.arg(omegaEst)
+  sub <- match.arg(sub)
 
-  #if (method %in% c("CLX", "Z", "M")) {
-    omegaHat <- match.arg(omegaHat)
-    omegaEst <- match.arg(omegaEst)
-    params <- list(C = C, omegaHat = omegaHat, omegaEst = omegaEst,
-                   omegaGiven=omegaGiven)
-
-    if (method == "Z") {
-      params <- c(params, list(R = R, block = block))
-
-    } else if (method == "M") {
-      subForM <- match.arg(subForM)
-      CLXomega <- match.arg(CLXomega)
-      params <- c(params, list(R = R, subForM = subForM, ndim = ndim))
-    }
-
-  #} else if (method %in% c("H", "D", "BS", "CQ")) {# in case for future modification
-  #  NULL
-  #}
-
-  return(params)
+  list(C=C, omegaGiven=omegaGiven, omegaHat=omegaHat,
+       omegaEst=omegaEst, ndim=ndim, sub=sub, B=B, block=block)
 }

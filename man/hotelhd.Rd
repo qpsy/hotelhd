@@ -9,19 +9,19 @@ hotelhd(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
 }
 \arguments{
 \item{X1,X2}{matrix. n1(,n2) by p data matrix. Missing values (including NaN) will
-be omitted from the calculations.
-Data 'X1' and 'X2' only accept matrix as arguments to prevent confusion.
-All the methods
-implemented in this package assume continuous variables as inputs.}
+ be omitted from the calculations.
+ Data 'X1' and 'X2' only accept matrix as arguments to prevent confusion.
+ All the methods
+ implemented in this package assume continuous variables as inputs.}
 
 \item{method}{character. The method to be used.
-See 'Details'.}
+  See 'Details'.}
 
 \item{alpha}{numeric. The type 1 error.}
 
 \item{control}{list. Control parameters returned by \code{hotelhd_control}.
-Users NEED to check the function \code{\link{hotelhd_control}} when applying
-maximum type tests (i.e., "CLX", "Z", "M").}
+  Users NEED to check the function \code{\link{hotelhd_control}} when applying
+  maximum type tests (i.e., "CLX", "Z", "M").}
 
 \item{...}{additional arguments to be passed to \code{flare::sugm}.
   The function "sugm" estimates Gaussian precision matrix in high dimensions.
@@ -51,12 +51,19 @@ Test results.
 }
 }
 \references{
-Bai, Zhidong D and Saranadasa, Hewa. (1996). Effect of high dimension: by an example of a two sample problem. \emph{Statistica Sinica}, 6(2), 311-329.
+Bai, Zhidong D and Saranadasa, Hewa. (1996). Effect of high dimension: by an example
+    of a two sample problem. \emph{Statistica Sinica}, 6(2), 311-329.
 
-  Cai, T. Tony and Liu, Weidong and Xia, Yin. (2014). Two-sample test of high dimensional means under dependence. \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 76(2), 349-372.
+  Cai, T. Tony and Liu, Weidong and Xia, Yin. (2014). Two-sample test of high
+    dimensional means under dependence.
+   \emph{Journal of the Royal Statistical Society:
+   Series B (Statistical Methodology)}, 76(2), 349-372.
 
-  Chen, Song Xi and Qin, Ying-Li. (2010). A two-sample test for high-dimensional data with applications to gene-set testing. \emph{Annals of Statistics}, 38(2), 808-835.
+  Chen, Song Xi and Qin, Ying-Li. (2010). A two-sample test for
+    high-dimensional data with applications to gene-set testing.
+    \emph{Annals of Statistics}, 38(2), 808-835.
 
-  Dempster, A. P. (1958). A high dimensional two sample significance test. \emph{The Annals of Mathematical Statistics}, 995-1010.
+  Dempster, A. P. (1958). A high dimensional two sample significance test.
+    \emph{The Annals of Mathematical Statistics}, 995-1010.
 }
 

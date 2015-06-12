@@ -8,12 +8,16 @@
 #'  Data 'X1' and 'X2' only accept matrix as arguments to prevent confusion.
 #'  All the methods
 #'  implemented in this package assume continuous variables as inputs.
+#'
 #' @param method character. The method to be used.
 #'   See 'Details'.
+#'
 #' @param alpha numeric. The type 1 error.
+#'
 #' @param control list. Control parameters returned by \code{hotelhd_control}.
 #'   Users NEED to check the function \code{\link{hotelhd_control}} when applying
 #'   maximum type tests (i.e., "CLX", "Z", "M").
+#'
 #' @param ... additional arguments to be passed to \code{flare::sugm}.
 #'   The function "sugm" estimates Gaussian precision matrix in high dimensions.
 #'   Currently, 'clime' is applied. See the help of \code{flare::sugm}.
@@ -37,13 +41,20 @@
 #' }
 #'
 #' @references
-#'   Bai, Zhidong D and Saranadasa, Hewa. (1996). Effect of high dimension: by an example of a two sample problem. \emph{Statistica Sinica}, 6(2), 311-329.
+#'   Bai, Zhidong D and Saranadasa, Hewa. (1996). Effect of high dimension: by an example
+#'     of a two sample problem. \emph{Statistica Sinica}, 6(2), 311-329.
 #'
-#'   Cai, T. Tony and Liu, Weidong and Xia, Yin. (2014). Two-sample test of high dimensional means under dependence. \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 76(2), 349-372.
+#'   Cai, T. Tony and Liu, Weidong and Xia, Yin. (2014). Two-sample test of high
+#'     dimensional means under dependence.
+#'    \emph{Journal of the Royal Statistical Society:
+#'    Series B (Statistical Methodology)}, 76(2), 349-372.
 #'
-#'   Chen, Song Xi and Qin, Ying-Li. (2010). A two-sample test for high-dimensional data with applications to gene-set testing. \emph{Annals of Statistics}, 38(2), 808-835.
+#'   Chen, Song Xi and Qin, Ying-Li. (2010). A two-sample test for
+#'     high-dimensional data with applications to gene-set testing.
+#'     \emph{Annals of Statistics}, 38(2), 808-835.
 #'
-#'   Dempster, A. P. (1958). A high dimensional two sample significance test. \emph{The Annals of Mathematical Statistics}, 995-1010.
+#'   Dempster, A. P. (1958). A high dimensional two sample significance test.
+#'     \emph{The Annals of Mathematical Statistics}, 995-1010.
 #'
 #' @importFrom nleqslv nleqslv
 #' @importFrom flare sugm
@@ -51,7 +62,8 @@
 #' @useDynLib hotelhd
 #'
 #' @export
-hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),alpha = 0.05,
+hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
+                    alpha = 0.05,
                     control = hotelhd_control(), ...)
 {
   stopifnot(is.matrix(X1), is.matrix(X1))
@@ -76,7 +88,6 @@ hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),al
   if (method %in% c("CLX", "Z", "M")) {
     omegaHat <- control$omegaHat
     omegaEst <- control$omegaEst
-    C <- control$C
     omegaGiven <- control$omegaGiven
 
 #     calcOmega <- function() {
@@ -103,49 +114,53 @@ hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),al
 #       }
 #     }
 
-## calculation of Omega hat
-## if it is useful, export it later.
-calcOmega <- function(...)
-{
-  extraArgs <- list(...)
+    ## calculation of Omega hat
+    ## if it is useful, export it later.
+    calcOmega <- function(...)
+    {
+      # in non-high-dimensional case, simply calculate inverse of S
+      if ((n-2) > p) return(solve(S))
 
-  if (length(extraArgs)) {
-    namesExtraArgs <- names(extraArgs)
-    sugmArgs <- names(formals(sugm)) #legal arg names
-    indx <- match(namesExtraArgs, sugmArgs, nomatch=0L)
+      extraArgs <- list(...)
 
-    if (any(indx==0L)) {
-      stop(gettextf("Argument %s not matched.", namesExtraArgs[indx==0L]),
-           domain = NA)
-    } else if (("method" %in% namesExtraArgs) &&
-                 extraArgs[["method"]] != "clime") {
-      stop("Currently, only clime can be used.", domain = NA)
-    } else if ("data" %in% namesExtraArgs) {
-      stop("Currently, internally caculated data is used.", domain = NA)
+      if (length(extraArgs)) {
+        namesExtraArgs <- names(extraArgs)
+        sugmArgs <- names(formals(sugm)) #legal arg names
+        indx <- match(namesExtraArgs, sugmArgs, nomatch=0L)
+
+        if (any(indx==0L)) {
+          stop(gettextf("Argument %s not matched.", namesExtraArgs[indx==0L]),
+               domain = NA)
+        } else if (("method" %in% namesExtraArgs) &&
+                   extraArgs[["method"]] != "clime") {
+          stop("Currently, only clime can be used.", domain = NA)
+        } else if ("data" %in% namesExtraArgs) {
+          stop("Currently, internally caculated data is used.", domain = NA)
+        }
+
+        if ("nlambda" %in% namesExtraArgs) {
+          omegaList <- flare::sugm(S, method = "clime", ...)$icov
+        } else {
+          omegaList <- flare::sugm(S, nlambda=50, method = "clime", ...)$icov
+        }
+
+        # default: where no additional arguments for 'sugm'
+      } else {
+        omegaList <- flare::sugm(S, nlambda=50, method="clime")$icov
+      }
+
+      dif <- vapply(omegaList,
+                    function(O) sum(diag(S%*%O))-log(det(O)),
+                    FUN.VALUE=vector("numeric", 1L))
+
+      omegaList[[which.min(dif)]]
     }
 
-    if ("nlambda" %in% namesExtraArgs) {
-      omegaList <- sugm(S, method = "clime", ...)$icov
-    } else {
-      omegaList <- sugm(S, nlambda=50, method = "clime", ...)$icov
-    }
-
-    # default: where no additional arguments for 'sugm'
-  } else {
-    omegaList <- sugm(S, nlambda=50, method="clime")$icov
-  }
-
-  dif <- vapply(omegaList,
-                function(O) sum(diag(S%*%O))-log(det(O)),
-                FUN.VALUE=vector("numeric", 1L))
-
-  omegaList[[which.min(dif)]]
-}
-
+    ##------------------------------------------------------
     if (method=="CLX") {
       if (is.null(omegaGiven)) {
         if (omegaHat == "omega") Omega <- calcOmega(...)
-        else Omega <- diag(nrow=p, ncol=p)
+        else if (omegaHat == "diag") Omega <- diag(nrow=p, ncol=p)
 
       } else {
         Omega <- omegaGiven
@@ -169,14 +184,14 @@ calcOmega <- function(...)
 
       ##--------------------------------------------------
     } else if (method == "Z") {
-      R <- control$R
+      B <- control$B
       block <- control$block
 
       if (block > min(n1, n2)) stop("The block size is greater than nobs.")
 
       if (is.null(omegaGiven)) {
         if (omegaHat == "omega") Omega <- calcOmega(...)
-        else Omega <- diag(nrow=p, ncol=p)
+        else if (omegaHat == "diag") Omega <- diag(nrow=p, ncol=p)
 
       } else {
         Omega <- omegaGiven
@@ -204,7 +219,7 @@ calcOmega <- function(...)
       else l2 <- n2 / block
 
       T_boot <- sqnn * quantile(
-        vapply(1:R, function(i) {
+        vapply(1:B, function(i) {
           max(abs(
             (colMeans(sweep(XI1diff, 1, rep(rnorm(l1), each=block)[1:n1],
                             FUN="*", check.margin=FALSE)) -
@@ -214,7 +229,7 @@ calcOmega <- function(...)
         1 - alpha, names=FALSE)
 
       Tt_boot <- sqnn * quantile(
-        vapply(1:R, function(i) {
+        vapply(1:B, function(i) {
           max(abs(
             (colMeans(sweep(XI1diff, 1, rep(rnorm(l1), each=block)[1:n1],
                             FUN="*", check.margin=FALSE)) -
@@ -229,13 +244,13 @@ calcOmega <- function(...)
 
       ##--------------------------------------------------------
     } else if (method == "M") {
-      R <- control$R
-      subForM <- control$subForM
+      B <- control$B
+      sub <- control$sub
       ndim <- control$ndim
 
       if (is.null(omegaGiven)) {
         if (omegaHat == "omega") Omega <- calcOmega(...)
-        else Omega <- diag(nrow=p, ncol=p)
+        else if (omegaHat == "diag") Omega <- diag(nrow=p, ncol=p)
 
       } else {
         Omega <- omegaGiven
@@ -246,19 +261,19 @@ calcOmega <- function(...)
       X2b <- sweep(X2, 2, X2bar, check.margin=FALSE) %*% Omega
 
       ## temporally commented out for simulation
-      #jk <- combn(p, ndim) # column index
-      #jkc <- NCOL(jk)
+      jk <- combn(p, ndim) # column index
+      jkc <- NCOL(jk)
 
       ## M statistic (omitted constant term)
       calcM1 <- function(Z, Omega, ndim) {
-        ## max(# M(Omega)
-        ##     vapply(1:jkc, function(i) {
-        ##       jk_i <- jk[, i]
-        ##       Z_jk <- Z[jk_i]
-        ##       omegaInv_jk <- solve(Omega[jk_i, jk_i])
-        ##       t(Z_jk) %*% omegaInv_jk %*% Z_jk
-        ##     },
-        ##     FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE))
+        max(# M(Omega)
+          vapply(1:jkc, function(i) {
+            jk_i <- jk[, i]
+            Z_jk <- Z[jk_i]
+            omegaInv_jk <- solve(Omega[jk_i, jk_i])
+            t(Z_jk) %*% omegaInv_jk %*% Z_jk
+          },
+          FUN.VALUE=vector("numeric", 1), USE.NAMES=FALSE))
       }
 
       ## M statistic (omitted constant term)
@@ -273,9 +288,9 @@ calcOmega <- function(...)
         cumsum(sort(Z*Z / diag(Omega), decreasing=TRUE)[c(1:ndim)])
       }
 
-      subForM <- match.arg(subForM)
-      if (subForM == "sub") calcM <- calcM1
-      else calcM <- calcM2 # if (subForM == "diag")
+      sub <- match.arg(sub)
+      if (sub == "sub") calcM <- calcM1
+      else calcM <- calcM2 # if (sub == "diag")
 
       ## test statistic
       Zo <- Omega %*% (X1bar - X2bar)
@@ -297,7 +312,7 @@ calcOmega <- function(...)
       ##     1 - alpha, names=FALSE)
 
       M_boot <- apply(
-        vapply(1:R, function(i) {# R of boot statistics
+        vapply(1:B, function(i) {# R of boot statistics
           Zb <-
             colMeans(
               sweep(X1b, 1, rnorm(n1),
