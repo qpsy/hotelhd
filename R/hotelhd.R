@@ -288,7 +288,6 @@ hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
         cumsum(sort(Z*Z / diag(Omega), decreasing=TRUE)[c(1:ndim)])
       }
 
-      sub <- match.arg(sub)
       if (sub == "sub") calcM <- calcM1
       else calcM <- calcM2 # if (sub == "diag")
 
