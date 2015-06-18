@@ -2,6 +2,12 @@
 #'
 #' Various parameters that control setting of tests. Currently,
 #' the maximum type tests (i.e., 'CLX', 'Z', 'M') only need control parameters.
+#' The followings are the parameters that should be considered for each method.
+#' \describe{
+#'   \item{CLX}{omegaGiven, omegaHat, omegaEst}
+#'   \item{M}{omegaGiven, omegaHat, omegaEst, ndim, sub}
+#'   \item{Z}{omegaGiven, omegaHat, omegaEst, B, Block}
+#' }
 #'
 #' @param omegaGiven \code{NULL} or \eqn{p} by \eqn{p} matrix.
 #'   When the default \code{NULL} is chosen, \eqn{\Omega} matrix is estimated;
@@ -30,7 +36,7 @@
 #'   the method 'M'. The default 'diag' uses diagonals of \eqn{\Omega}
 #'   to improve efficiency, and calculate results of 1 to \code{ndim}.
 #'   The 'sub' extracts sub-matrix from \eqn{\Omega}.
-
+#'
 #' @param B integer. The number of bootstrap statistics for 'Z'.
 #'
 #' @param block integer. A block size for blockwize multiplier
