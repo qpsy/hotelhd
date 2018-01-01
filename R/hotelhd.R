@@ -163,7 +163,8 @@ hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
         else if (omegaHat == "diag") Omega <- diag(nrow=p, ncol=p)
 
       } else {
-        Omega <- omegaGiven
+        if (omegaHat == "omega") Omega <- omegaGiven
+        else if (omegaHat == "diag") Omega <- diag(nrow=p, ncol=p)
       }
 
       Z <- Omega %*% (X1bar - X2bar)
