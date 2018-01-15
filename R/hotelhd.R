@@ -160,7 +160,7 @@ hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
     if (method=="CLX") {
       if (is.null(omegaGiven)) {
         if (omegaHat == "omega") Omega <- calcOmega(...)
-        else if (omegaHat == "diag") Omega <- diag(nrow=p, ncol=p)
+        else if (omegaHat == "identity") Omega <- diag(nrow=p, ncol=p)
 
       } else {
         Omega <- omegaGiven
@@ -191,7 +191,7 @@ hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
 
       if (is.null(omegaGiven)) {
         if (omegaHat == "omega") Omega <- calcOmega(...)
-        else if (omegaHat == "diag") Omega <- diag(nrow=p, ncol=p)
+        else if (omegaHat == "identity") Omega <- diag(nrow=p, ncol=p)
 
       } else {
         Omega <- omegaGiven
@@ -250,7 +250,7 @@ hotelhd <- function(X1, X2, method = c("H", "D", "BS", "CQ", "CLX", "Z", "M"),
 
       if (is.null(omegaGiven)) {
         if (omegaHat == "omega") Omega <- calcOmega(...)
-        else if (omegaHat == "diag") Omega <- diag(nrow=p, ncol=p)
+        else if (omegaHat == "identity") Omega <- diag(nrow=p, ncol=p)
 
       } else {
         Omega <- omegaGiven
